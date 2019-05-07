@@ -34,7 +34,7 @@ COPY www /var/www/html/
 RUN mkdir -p /opt/fritz-dump
 WORKDIR /opt/fritz-dump
 
-COPY compact-json-stream.js package.json package-lock.json fritz-capture.sh run.sh /opt/fritz-dump/
+COPY compact-tshark-stream.js package.json package-lock.json fritz-capture.sh run.sh /opt/fritz-dump/
 
 RUN npm install
 

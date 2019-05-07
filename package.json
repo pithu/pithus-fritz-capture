@@ -2,7 +2,7 @@
   "name": "fritz-capture",
   "version": "1.0.0",
   "description": "capture fritzbox wan interface",
-  "main": "compact-json-stream.js",
+  "main": "compact-tshark-stream.js",
   "author": "",
   "license": "ISC",
   "dependencies": {}

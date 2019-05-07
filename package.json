@@ -1,0 +1,12 @@
+{
+  "name": "fritz-capture",
+  "version": "1.0.0",
+  "description": "capture fritzbox wan interface",
+  "main": "compact-json-stream.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "JSONStream": "^1.3.5",
+    "event-stream": "^4.0.1"
+  }
+}

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # start apache
-service apache2 start
+service nginx start
 
 # start capture
-./fritz-capture.sh | compact-tshark-stream.js > /var/www/html/fritz-dump.csv
+./fritz-capture.sh | compact-tshark-stream.js > $WWW_ROOT/fritz-dump.csv

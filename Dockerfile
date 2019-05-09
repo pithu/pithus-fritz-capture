@@ -23,6 +23,7 @@ WORKDIR /opt/fritz-dump
 
 # Prepare nginx
 COPY www $WWW_ROOT
+EXPOSE 80
 
 # Prepare code
 COPY compact-tshark-stream.js package.json package-lock.json fritz-capture.sh run.sh /opt/fritz-dump/

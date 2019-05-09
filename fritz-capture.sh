@@ -46,7 +46,7 @@ if [[ $SID =~ ^0+$ ]] ; then echo "Login failed. Did you create & use explicit F
 
 echo "Capturing traffic on Fritz!Box interface $IFACE ..." 1>&2
 
-wget --no-check-certificate -qO- $FRITZIP/cgi-bin/capture_notimeout?ifaceorminor=$IFACE\&snaplen=\&capture=Start\&sid=$SID  tshark -T fields -e frame.len -e frame.protocols -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -r -
+wget --no-check-certificate -qO- $FRITZIP/cgi-bin/capture_notimeout?ifaceorminor=$IFACE\&snaplen=\&capture=Start\&sid=$SID | tshark -T fields -e frame.len -e frame.protocols -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -r -
 
 # wget --no-check-certificate -qO- $FRITZIP/cgi-bin/capture_notimeout?ifaceorminor=$IFACE\&snaplen=1600\&capture=Start\&sid=$SID | tshark -T json -r -
 

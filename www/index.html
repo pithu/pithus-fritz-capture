@@ -4,16 +4,78 @@
     <meta charset="utf-8">
     <title>Minimal D3 Example</title>
     <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <style>
+
+        .chart rect.blue {
+            fill: steelblue;
+        }
+
+        .chart rect.red {
+            fill: sienna;
+        }
+
+        .chart text {
+            fill: white;
+            font: 10px sans-serif;
+            text-anchor: end;
+        }
+
+    </style>
 </head>
 <body>
-<script type="text/javascript">
-    d3.dsv('\t', './fritz-capture.csv').then(function(data) {
-        d3.select("body")
-            .data(data)
+<svg class="chart"></svg>
+<script>
+
+    const time = d => new Date(d);
+
+    const download = d => parseInt(d.download, 10);
+    const timeSlotDownloadSum = ts =>
+        d3.sum(ts.values, download);
+
+    const upload = d => parseInt(d.upload, 10);
+    const timeSlotUploadSum = ts =>
+        d3.sum(ts.values, upload);
+
+    d3.dsv('\t', './fritz-capture.sample.csv').then(function(data) {
+        const width = 1000;
+        const height = 800;
+        const barWidth = 5;
+
+        const timeSlots = d3.nest().key(d => d.time).entries(data);
+        const x = d3.scaleUtc()
+            .domain([time(timeSlots[0].key), time(timeSlots[timeSlots.length-1].key)])
+            .range([0, width]);
+
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(timeSlots, timeSlotDownloadSum)])
+            .range([0, height]);
+
+        var chart = d3.select(".chart")
+            .attr("width", width)
+            .attr("height", height);
+
+        var bar = chart
+            .selectAll("g")
+            .data(timeSlots)
             .enter()
-            .append("p")
-            .text(function(d) { return `${d.time}\t${d.remote_ip}\t${d.upload}\t${d.download}`; });
-    });
+            .append("g")
+            .attr("transform", ts =>
+                `translate(${x(time(ts.key))}, 0)`
+            );
+
+        bar.append("rect")
+            .attr('class', 'blue')
+            .attr("width", barWidth)
+            .attr("height", ts => y(timeSlotDownloadSum(ts)));
+
+        bar.append("rect")
+            .attr('class', 'red')
+            .attr("transform", 'translate(1, 0)')
+            .attr("width", barWidth-2)
+            .attr("height", ts => y(timeSlotUploadSum(ts)));
+
+
+    })
 </script>
 </body>
 </html>

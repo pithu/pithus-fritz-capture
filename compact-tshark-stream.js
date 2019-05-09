@@ -78,7 +78,7 @@ printHeader();
 
 setInterval(() => {
     const map = compact();
-    const timestamp = new Date().getTime();
+    const timestamp = new Date().toISOString();
 
     for (const key of Object.keys(map)) {
         let line = '';

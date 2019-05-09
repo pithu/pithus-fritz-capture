@@ -1,5 +1,19 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Minimal D3 Example</title>
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+</head>
 <body>
-    Hello world !
+<script type="text/javascript">
+    d3.dsv('\t', './fritz-capture.csv').then(function(data) {
+        d3.select("body")
+            .data(data)
+            .enter()
+            .append("p")
+            .text(function(d) { return `${d.time}\t${d.remote_ip}\t${d.upload}\t${d.download}`; });
+    });
+</script>
 </body>
 </html>

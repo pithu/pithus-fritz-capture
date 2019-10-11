@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
-const { ZonedDateTime, DateTimeFormatter } = require('@js-joda/core');
+const { ZonedDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
 
 const WWW_ROOT = process.env.WWW_ROOT || "";
 
@@ -141,19 +141,19 @@ function reportTimeFrane(map, timeFrame) {
     writeJsonToFile(fileName, JSON.stringify(data));
 }
 
-const HOUR_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd-HH');
+const HOUR_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
 const DAY_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd');
 const MONTH_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM');
 
 
 function report() {
     const map = compact();
-    const zonedDateTime = ZonedDateTime.now();
+    const zonedDateTime = ZonedDateTime.now(ZoneId.UTC);
     reportRaw(map, zonedDateTime);
     reportTimeFrane(map, zonedDateTime.format(HOUR_FORMAT));
     reportTimeFrane(map, zonedDateTime.format(DAY_FORMAT));
     reportTimeFrane(map, zonedDateTime.format(MONTH_FORMAT));
 }
 
-setInterval(report, 1000);
+setInterval(report, 10000);
 

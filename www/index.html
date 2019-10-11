@@ -27,81 +27,91 @@
         }
 
         $(function() {
-            const HOUR_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM-dd-HH');
+            const HOUR_FORMAT = JSJoda.DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
             const DAY_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM-dd');
             const MONTH_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM');
-            const zonedDateTime = JSJoda.ZonedDateTime.now();
+            const zonedDateTime = JSJoda.ZonedDateTime.now(JSJoda.ZoneId.UTC);
+
+            $("<div>" + zonedDateTime.toString() + "</div>").appendTo("#time");
 
             const currentHourFileName = zonedDateTime.format(HOUR_FORMAT) + '.json';
+            $("<div>" + zonedDateTime.format(HOUR_FORMAT) + "</div>").appendTo("#currentHour .time");
             appendTimeFrame(currentHourFileName, "#currentHour tbody");
 
             const lastHourFileName = zonedDateTime.minusHours(1).format(HOUR_FORMAT) + '.json';
+            $("<div>" + zonedDateTime.minusHours(1).format(HOUR_FORMAT) + "</div>").appendTo("#lastHour .time");
             appendTimeFrame(lastHourFileName, "#lastHour tbody");
 
             const todayFileName = zonedDateTime.format(DAY_FORMAT) + '.json';
+            $("<div>" + zonedDateTime.format(DAY_FORMAT) + "</div>").appendTo("#today .time");
             appendTimeFrame(todayFileName, "#today tbody");
 
             const yesterdayFileName = zonedDateTime.minusDays(1).format(DAY_FORMAT) + '.json';
+            $("<div>" + zonedDateTime.minusDays(1).format(DAY_FORMAT) + "</div>").appendTo("#yesterday .time");
             appendTimeFrame(yesterdayFileName, "#yesterday tbody");
 
             const currentMonthFileName = zonedDateTime.format(MONTH_FORMAT) + '.json';
+            $("<div>" + zonedDateTime.format(MONTH_FORMAT) + "</div>").appendTo("#currentMonth .time");
             appendTimeFrame(currentMonthFileName, "#currentMonth tbody");
 
             const lastMonthFileName = zonedDateTime.minusMonths(1).format(MONTH_FORMAT) + '.json';
+            $("<div>" + zonedDateTime.minusMonths(1).format(MONTH_FORMAT) + "</div>").appendTo("#lastMonth .time");
             appendTimeFrame(lastMonthFileName, "#lastMonth tbody");
         });
     </script>
 </head>
 <body>
 <div class="wrapper">
-    <div class="profile">
-        <H3>Current hour</H3>
-        <table id="currentHour" border="2">
+    <H3>Fritz!Box data volume monitor</H3>
+    <H3 id="time"></H3>
+    <div class="profile" id="currentHour" >
+        <H3 class="time">Current hour <span></span></H3>
+        <table border="2">
             <thead>
                 <th>Local IP</th><th>Download</th><th>Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
-    <div class="profile">
-        <H3>Last hour</H3>
-        <table id="lastHour" border="2">
+    <div class="profile" id="lastHour">
+        <H3 class="time">Last hour <span></span></H3>
+        <table border="2">
             <thead>
                 <th>Local IP</th><th>Download</th><th>Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
-    <div class="profile">
-        <H3>Today</H3>
-        <table id="today" border="2">
+    <div class="profile" id="today">
+        <H3 class="time">Today <span></span></H3>
+        <table border="2">
             <thead>
                 <th>Local IP</th><th>Download</th><th>Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
-    <div class="profile">
-        <H3>Yesterday</H3>
-        <table id="yesterday" border="2">
+    <div class="profile" id="yesterday">
+        <H3 class="time">Yesterday <span></span></H3>
+        <table border="2">
             <thead>
                 <th>Local IP</th><th>Download</th><th>Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
-    <div class="profile">
-        <H3>Current Month</H3>
-        <table id="currentMonth" border="2">
+    <div class="profile" id="currentMonth">
+        <H3 class="time">Current Month <span></span></H3>
+        <table border="2">
             <thead>
                 <th>Local IP</th><th>Download</th><th>Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
-    <div class="profile">
-        <H3>Last Month</H3>
-        <table id="lastMonth" border="2">
+    <div class="profile" id="lastMonth">
+        <H3 class="time">Last Month <span></span></H3>
+        <table border="2">
             <thead>
                 <th>Local IP</th><th>Download</th><th>Upload</th>
             </thead>

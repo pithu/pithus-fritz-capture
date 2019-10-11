@@ -2,80 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Minimal D3 Example</title>
-    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
-    <style>
+    <title>fritz!box data volume report</title>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
+    <script src="//cdn.jsdelivr.net/npm/@js-joda/core@1.11.0/dist/js-joda.js"></script>
 
-        .chart rect.blue {
-            fill: steelblue;
+    <script>
+
+        function appendTimeFrame(fileName, selector) {
+            $.getJSON(fileName, function(data) {
+                const localIpVolumes = Object.keys(data.local).reduce((acc, localIp) => {
+                    acc.push({ localIp, ...data.local[localIp] });
+                    return acc;
+                }, []);
+                localIpVolumes.sort((a, b) => b.download - a.download);
+                $.each(localIpVolumes, function(idx, entry) {
+                    var tblRow = "<tr>" +
+                        "<td>" + entry.localIp + "</td>" +
+                        "<td align=\"right\">" + entry.download.toLocaleString("de") + "</td>" +
+                        "<td align=\"right\">" + entry.upload.toLocaleString("de") + "</td>" +
+                        "</tr>";
+                    $(tblRow).appendTo(selector);
+                });
+            });
         }
 
-        .chart rect.red {
-            fill: sienna;
-        }
+        $(function() {
+            const HOUR_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM-dd-HH');
+            const DAY_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM-dd');
+            const MONTH_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM');
+            const zonedDateTime = JSJoda.ZonedDateTime.now();
 
-        .chart text {
-            fill: white;
-            font: 10px sans-serif;
-            text-anchor: end;
-        }
+            const currentHourFileName = zonedDateTime.format(HOUR_FORMAT) + '.json';
+            appendTimeFrame(currentHourFileName, "#currentHour tbody");
 
-    </style>
+            const lastHourFileName = zonedDateTime.minusHours(1).format(HOUR_FORMAT) + '.json';
+            appendTimeFrame(lastHourFileName, "#lastHour tbody");
+
+            const todayFileName = zonedDateTime.format(DAY_FORMAT) + '.json';
+            appendTimeFrame(todayFileName, "#today tbody");
+
+            const yesterdayFileName = zonedDateTime.minusDays(1).format(DAY_FORMAT) + '.json';
+            appendTimeFrame(yesterdayFileName, "#yesterday tbody");
+
+            const currentMonthFileName = zonedDateTime.format(MONTH_FORMAT) + '.json';
+            appendTimeFrame(currentMonthFileName, "#currentMonth tbody");
+
+            const lastMonthFileName = zonedDateTime.minusMonths(1).format(MONTH_FORMAT) + '.json';
+            appendTimeFrame(lastMonthFileName, "#lastMonth tbody");
+        });
+    </script>
 </head>
 <body>
-<svg class="chart"></svg>
-<script>
-
-    const time = d => new Date(d);
-
-    const download = d => parseInt(d.download, 10);
-    const timeSlotDownloadSum = ts =>
-        d3.sum(ts.values, download);
-
-    const upload = d => parseInt(d.upload, 10);
-    const timeSlotUploadSum = ts =>
-        d3.sum(ts.values, upload);
-
-    d3.dsv('\t', './fritz-capture.sample.csv').then(function(data) {
-        const width = 1000;
-        const height = 800;
-        const barWidth = 5;
-
-        const timeSlots = d3.nest().key(d => d.time).entries(data);
-        const x = d3.scaleUtc()
-            .domain([time(timeSlots[0].key), time(timeSlots[timeSlots.length-1].key)])
-            .range([0, width]);
-
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(timeSlots, timeSlotDownloadSum)])
-            .range([0, height]);
-
-        var chart = d3.select(".chart")
-            .attr("width", width)
-            .attr("height", height);
-
-        var bar = chart
-            .selectAll("g")
-            .data(timeSlots)
-            .enter()
-            .append("g")
-            .attr("transform", ts =>
-                `translate(${x(time(ts.key))}, 0)`
-            );
-
-        bar.append("rect")
-            .attr('class', 'blue')
-            .attr("width", barWidth)
-            .attr("height", ts => y(timeSlotDownloadSum(ts)));
-
-        bar.append("rect")
-            .attr('class', 'red')
-            .attr("transform", 'translate(1, 0)')
-            .attr("width", barWidth-2)
-            .attr("height", ts => y(timeSlotUploadSum(ts)));
-
-
-    })
-</script>
+<div class="wrapper">
+    <div class="profile">
+        <H3>Current hour</H3>
+        <table id="currentHour" border="2">
+            <thead>
+                <th>Local IP</th><th>Download</th><th>Upload</th>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="profile">
+        <H3>Last hour</H3>
+        <table id="lastHour" border="2">
+            <thead>
+                <th>Local IP</th><th>Download</th><th>Upload</th>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="profile">
+        <H3>Today</H3>
+        <table id="today" border="2">
+            <thead>
+                <th>Local IP</th><th>Download</th><th>Upload</th>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="profile">
+        <H3>Yesterday</H3>
+        <table id="yesterday" border="2">
+            <thead>
+                <th>Local IP</th><th>Download</th><th>Upload</th>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="profile">
+        <H3>Current Month</H3>
+        <table id="currentMonth" border="2">
+            <thead>
+                <th>Local IP</th><th>Download</th><th>Upload</th>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="profile">
+        <H3>Last Month</H3>
+        <table id="lastMonth" border="2">
+            <thead>
+                <th>Local IP</th><th>Download</th><th>Upload</th>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
 </body>
 </html>

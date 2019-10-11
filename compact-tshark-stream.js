@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
+const path = require('path');
 const readline = require('readline');
+const { ZonedDateTime, DateTimeFormatter } = require('@js-joda/core');
 
-let packets = []
+const WWW_ROOT = process.env.WWW_ROOT || "";
+
+let packets = [];
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -76,14 +81,11 @@ function printHeader() {
 
 printHeader();
 
-setInterval(() => {
-    const map = compact();
-    const timestamp = new Date().toISOString();
-
+function reportRaw(map, zonedDateTime) {
     for (const key of Object.keys(map)) {
         let line = '';
         const entry = map[key];
-        line += `${timestamp}\t`;
+        line += `${zonedDateTime.toInstant().toString()}\t`;
         line += `${entry.localIp}\t`;
         line += `${entry.remoteIp}\t`;
         line += `${entry.remotePort}\t`;
@@ -92,5 +94,66 @@ setInterval(() => {
         line += `${entry.upload}\t`;
         console.log(line);
     }
-}, 10000);
+}
+
+function readJsonFromFile(fileName) {
+    if (fs.existsSync(fileName)) {
+        const jsonData = fs.readFileSync(fileName, 'utf8');
+        return JSON.parse(jsonData);
+    }
+    return {
+        local: {},
+        remote: {},
+    };
+}
+
+function writeJsonToFile(fileName, jsonData) {
+    fs.writeFileSync(fileName, jsonData, 'utf8');
+}
+
+function reportTimeFrane(map, timeFrame) {
+    const fileName = path.join(WWW_ROOT, `${timeFrame}.json`);
+    const data = readJsonFromFile(fileName);
+    for (const key of Object.keys(map)) {
+        const entry = map[key];
+        if (!data.local[entry.localIp]) {
+            data.local[entry.localIp] = {
+                download: 0,
+                upload: 0,
+            }
+        }
+        data.local[entry.localIp] = {
+            download: data.local[entry.localIp].download + entry.download,
+            upload: data.local[entry.localIp].upload + entry.upload,
+        };
+
+        if (!data.remote[entry.remoteIp]) {
+            data.remote[entry.remoteIp] = {
+                download: 0,
+                upload: 0,
+            }
+        }
+        data.remote[entry.remoteIp] = {
+            download: data.remote[entry.remoteIp].download + entry.download,
+            upload: data.remote[entry.remoteIp].upload + entry.upload,
+        };
+    }
+    writeJsonToFile(fileName, JSON.stringify(data));
+}
+
+const HOUR_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd-HH');
+const DAY_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd');
+const MONTH_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM');
+
+
+function report() {
+    const map = compact();
+    const zonedDateTime = ZonedDateTime.now();
+    reportRaw(map, zonedDateTime);
+    reportTimeFrane(map, zonedDateTime.format(HOUR_FORMAT));
+    reportTimeFrane(map, zonedDateTime.format(DAY_FORMAT));
+    reportTimeFrane(map, zonedDateTime.format(MONTH_FORMAT));
+}
+
+setInterval(report, 1000);
 

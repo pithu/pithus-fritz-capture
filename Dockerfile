@@ -12,7 +12,7 @@ ENV WWW_ROOT=/var/www/html
 RUN apt-get update && \
     apt-get -y dist-upgrade
 
-RUN apt-get -y install wget curl tshark nginx
+RUN apt-get -y install locales psmisc supervisor cron rsyslog wget curl tshark nginx
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 RUN apt-get -y install nodejs

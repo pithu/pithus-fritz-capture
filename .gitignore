@@ -1,6 +1,8 @@
 # Created by .ignore support plugin (hsz.mobi)
 
 playground
+*.json
+*.csv
 
 # IntelliJ project files
 .idea

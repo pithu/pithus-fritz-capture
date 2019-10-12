@@ -13,6 +13,7 @@ const rl = readline.createInterface({
     terminal: false
 });
 
+// compact packets
 function compact(packets) {
     const map = {};
     for (const packet of packets) {
@@ -59,9 +60,8 @@ function printHeader() {
 function reportCompact(map) {
     printHeader();
 
-    for (const key of Object.keys(map)) {
+    for (const entry of Object.values(map)) {
         let line = '';
-        const entry = map[key];
         line += `${entry.instant.toString()}\t`;
         line += `${entry.localIp}\t`;
         line += `${entry.remoteIp}\t`;
@@ -90,13 +90,13 @@ function writeJsonToFile(fileName, jsonData) {
 }
 
 function reportTimeFrame(map, formatter) {
-    const keys = Object.keys(map);
-    if (!keys || keys.length === 0) {
+    const entries = Object.values(map);
+    if (!entries || entries.length === 0) {
         return;
     }
 
     // detect time frame by a random entry of the current interval
-    const instant = map[keys[0]].instant;
+    const instant = entries[0].instant;
     const timeFrame = ZonedDateTime.ofInstant(instant, ZoneId.UTC).format(formatter);
 
     // read file that might already exist for that time frame
@@ -104,8 +104,7 @@ function reportTimeFrame(map, formatter) {
     const data = readJsonFromFile(fileName);
 
     // add and write data
-    for (const key of keys) {
-        const entry = map[key];
+    for (const entry of entries) {
         if (!data.local[entry.localIp]) {
             data.local[entry.localIp] = {
                 download: 0,

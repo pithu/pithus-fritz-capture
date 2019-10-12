@@ -2,12 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>fritz!box data volume report</title>
+    <title>fritz!box data volume monitor</title>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
     <script src="//cdn.jsdelivr.net/npm/@js-joda/core@1.11.0/dist/js-joda.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/filesize/4.2.1/filesize.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css" />
 
     <script>
+        $(document).ready(function() {
+            // reload every minute
+            setInterval('refreshPage()', 60000);
+        });
+
+        function refreshPage() {
+            location.reload();
+        }
+
+        function formatSize(bytes) {
+            return filesize(bytes, { locale: "de", round: 3 })
+        }
+
         function appendTimeFrame(fileName, selector) {
             $.getJSON(fileName, function (data) {
                 const localIpVolumes = Object.keys(data.local).reduce((acc, localIp) => {
@@ -17,9 +31,9 @@
                 localIpVolumes.sort((a, b) => b.download - a.download);
                 $.each(localIpVolumes, function (idx, entry) {
                     var tblRow = "<tr>" +
-                        "<td>" + entry.localIp + "</td>" +
-                        "<td class='td-byte'>" + entry.download.toLocaleString("de") + "</td>" +
-                        "<td class='td-byte'>" + entry.upload.toLocaleString("de") + "</td>" +
+                        "<td class='td-ip'>" + entry.localIp + "</td>" +
+                        "<td class='td-byte'>" + formatSize(entry.download) + "</td>" +
+                        "<td class='td-byte'>" + formatSize(entry.upload) + "</td>" +
                         "</tr>";
                     $(tblRow).appendTo(selector);
                 });
@@ -68,54 +82,54 @@
 <div class="wrapper">
     <div class="profile" id="currentHour" >
         <H3 class="time">Current hour <span></span></H3>
-        <table border="2">
+        <table class="volume-table">
             <thead>
-                <th>Local IP</th><th>Download</th><th>Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
     <div class="profile" id="lastHour">
         <H3 class="time">Last hour <span></span></H3>
-        <table border="2">
+        <table class="volume-table">
             <thead>
-                <th>Local IP</th><th>Download</th><th>Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
     <div class="profile" id="today">
         <H3 class="time">Today <span></span></H3>
-        <table border="2">
+        <table class="volume-table">
             <thead>
-                <th>Local IP</th><th>Download</th><th>Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
     <div class="profile" id="yesterday">
         <H3 class="time">Yesterday <span></span></H3>
-        <table border="2">
+        <table class="volume-table">
             <thead>
-                <th>Local IP</th><th>Download</th><th>Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
     <div class="profile" id="currentMonth">
         <H3 class="time">Current Month <span></span></H3>
-        <table border="2">
+        <table class="volume-table">
             <thead>
-                <th>Local IP</th><th>Download</th><th>Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
     </div>
     <div class="profile" id="lastMonth">
         <H3 class="time">Last Month <span></span></H3>
-        <table border="2">
+        <table class="volume-table">
             <thead>
-                <th>Local IP</th><th>Download</th><th>Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>

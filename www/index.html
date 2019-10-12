@@ -5,28 +5,28 @@
     <title>fritz!box data volume report</title>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
     <script src="//cdn.jsdelivr.net/npm/@js-joda/core@1.11.0/dist/js-joda.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css" />
 
     <script>
-
         function appendTimeFrame(fileName, selector) {
-            $.getJSON(fileName, function(data) {
+            $.getJSON(fileName, function (data) {
                 const localIpVolumes = Object.keys(data.local).reduce((acc, localIp) => {
-                    acc.push({ localIp, ...data.local[localIp] });
+                    acc.push({localIp, ...data.local[localIp]});
                     return acc;
                 }, []);
                 localIpVolumes.sort((a, b) => b.download - a.download);
-                $.each(localIpVolumes, function(idx, entry) {
+                $.each(localIpVolumes, function (idx, entry) {
                     var tblRow = "<tr>" +
                         "<td>" + entry.localIp + "</td>" +
-                        "<td align=\"right\">" + entry.download.toLocaleString("de") + "</td>" +
-                        "<td align=\"right\">" + entry.upload.toLocaleString("de") + "</td>" +
+                        "<td class='td-byte'>" + entry.download.toLocaleString("de") + "</td>" +
+                        "<td class='td-byte'>" + entry.upload.toLocaleString("de") + "</td>" +
                         "</tr>";
                     $(tblRow).appendTo(selector);
                 });
             });
         }
 
-        $(function() {
+        $(function () {
             const HOUR_FORMAT = JSJoda.DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
             const DAY_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM-dd');
             const MONTH_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM');
@@ -61,9 +61,11 @@
     </script>
 </head>
 <body>
-<div class="wrapper">
+<div class="header">
     <H3>Fritz!Box data volume monitor</H3>
     <H3 id="time"></H3>
+</div>
+<div class="wrapper">
     <div class="profile" id="currentHour" >
         <H3 class="time">Current hour <span></span></H3>
         <table border="2">

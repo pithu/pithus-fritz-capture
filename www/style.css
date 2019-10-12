@@ -1,0 +1,18 @@
+.wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.profile {
+    width: 40%;
+    box-shadow: 10px 10px;
+    background-color: lightblue;
+    margin: 20px;
+    padding: 20px;
+}
+
+.td-byte {
+    text-align: right;
+}
+

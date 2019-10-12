@@ -23,6 +23,7 @@ WORKDIR /opt/fritz-dump
 
 # Prepare nginx
 COPY www $WWW_ROOT
+COPY nginx-sites-available-default.conf /etc/nginx/sites-available/default
 EXPOSE 80
 
 # Prepare code

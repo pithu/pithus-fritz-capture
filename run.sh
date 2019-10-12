@@ -4,4 +4,4 @@
 service nginx start
 
 # start capture
-./fritz-capture.sh | ./compact-tshark-stream.js - > $WWW_ROOT/fritz-capture.csv
+./fritz-capture.sh | ./tshark-stream-add-timestamp.js - | ./tshark-stream-compact.js - > $WWW_ROOT/fritz-capture.csv

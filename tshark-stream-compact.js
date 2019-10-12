@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const { promisify } = require('util');
-const dns = require('dns');
+const { Resolver } = require('dns');
 
 const { Instant, ZonedDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
 
@@ -151,13 +151,17 @@ function writeIpToHostNameData(ipToHostNameMap) {
     fs.writeFileSync(ipToHostNameDataFileName, JSON.stringify([...ipToHostNameMap]), 'utf8');
 }
 
-const dnsReverseAsync = promisify(dns.reverse);
+const resolver = new Resolver();
+const DNS_SERVER = process.env.DNS_SERVER || '192.168.2.1';
+resolver.setServers([DNS_SERVER]);
+const ipToHost = (ip, cb) => resolver.reverse(ip, cb);
+const reverseAsync = promisify(ipToHost);
 async function resolveLocalHostNames(map) {
     const ipToHostNameMap = readIpToHostNameData();
     for (const entry of Object.values(map)) {
         if (!ipToHostNameMap.has(entry.localIp)) {
             try {
-                const hostNames = await dnsReverseAsync(entry.localIp);
+                const hostNames = await reverseAsync(entry.localIp);
                 ipToHostNameMap.set(entry.localIp, hostNames[0]);
             } catch (err) {
                 ipToHostNameMap.set(entry.localIp, 'unresolved');

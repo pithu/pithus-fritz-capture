@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# start apache
+# start web server
 service nginx start
 
 # start capture

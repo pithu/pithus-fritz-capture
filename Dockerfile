@@ -27,7 +27,7 @@ COPY nginx-sites-available-default.conf /etc/nginx/sites-available/default
 EXPOSE 80
 
 # Prepare code
-COPY compact-tshark-stream.js package.json package-lock.json fritz-capture.sh run.sh /opt/fritz-dump/
+COPY tshark-stream-add-timestamp.js tshark-stream-compact.js package.json package-lock.json fritz-capture.sh run.sh /opt/fritz-dump/
 RUN npm install
 
 ENTRYPOINT ["/opt/fritz-dump/run.sh"]

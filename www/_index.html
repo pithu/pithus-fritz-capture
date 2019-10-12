@@ -18,8 +18,14 @@
             location.reload();
         }
 
+        let ipToHostNameMap = new Map();
+        $.getJSON("ipToHostNameMap.json", function (data) {
+            ipToHostNameMap = new Map(data);
+        });
+        const ipToHostName = (ip) => ipToHostNameMap.get(ip) || "unknown";
+
         function formatSize(bytes) {
-            return filesize(bytes, { locale: "de", round: 3 })
+            return filesize(bytes, { locale: "de", round: 2 })
         }
 
         function appendTimeFrame(fileName, selector) {
@@ -32,6 +38,7 @@
                 $.each(localIpVolumes, function (idx, entry) {
                     var tblRow = "<tr>" +
                         "<td class='td-ip'>" + entry.localIp + "</td>" +
+                        "<td class='td-host'>" + ipToHostName(entry.localIp) + "</td>" +
                         "<td class='td-byte'>" + formatSize(entry.download) + "</td>" +
                         "<td class='td-byte'>" + formatSize(entry.upload) + "</td>" +
                         "</tr>";
@@ -84,7 +91,7 @@
         <H3 class="time">Current hour <span></span></H3>
         <table class="volume-table">
             <thead>
-                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-host">Host</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
@@ -93,7 +100,7 @@
         <H3 class="time">Last hour <span></span></H3>
         <table class="volume-table">
             <thead>
-                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-host">Host</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
@@ -102,7 +109,7 @@
         <H3 class="time">Today <span></span></H3>
         <table class="volume-table">
             <thead>
-                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-host">Host</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
@@ -111,7 +118,7 @@
         <H3 class="time">Yesterday <span></span></H3>
         <table class="volume-table">
             <thead>
-                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-host">Host</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
@@ -120,7 +127,7 @@
         <H3 class="time">Current Month <span></span></H3>
         <table class="volume-table">
             <thead>
-                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-host">Host</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>
@@ -129,7 +136,7 @@
         <H3 class="time">Last Month <span></span></H3>
         <table class="volume-table">
             <thead>
-                <th class="th-ip">Local IP</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
+                <th class="th-ip">Local IP</th><th class="th-host">Host</th><th class="th-byte">Download</th><th class="th-byte">Upload</th>
             </thead>
             <tbody></tbody>
         </table>

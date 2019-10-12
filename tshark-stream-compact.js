@@ -3,6 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { promisify } = require('util');
+const dns = require('dns');
+
 const { Instant, ZonedDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
 
 const WWW_ROOT = process.env.WWW_ROOT || "";
@@ -134,9 +137,40 @@ const HOUR_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
 const DAY_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd');
 const MONTH_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM');
 
+// reverse lookup ips
+const ipToHostNameDataFileName  = path.join(WWW_ROOT, "ipToHostNameMap.json");
+function readIpToHostNameData() {
+    if (fs.existsSync(ipToHostNameDataFileName)) {
+        const jsonData = fs.readFileSync(ipToHostNameDataFileName, 'utf8');
+        return  new Map(JSON.parse(jsonData))
+    }
+    return new Map()
+}
+
+function writeIpToHostNameData(ipToHostNameMap) {
+    fs.writeFileSync(ipToHostNameDataFileName, JSON.stringify([...ipToHostNameMap]), 'utf8');
+}
+
+const dnsReverseAsync = promisify(dns.reverse);
+async function resolveLocalHostNames(map) {
+    const ipToHostNameMap = readIpToHostNameData();
+    for (const entry of Object.values(map)) {
+        if (!ipToHostNameMap.has(entry.localIp)) {
+            try {
+                const hostNames = await dnsReverseAsync(entry.localIp);
+                ipToHostNameMap.set(entry.localIp, hostNames[0]);
+            } catch (err) {
+                ipToHostNameMap.set(entry.localIp, 'unresolved');
+            }
+        }
+    }
+    writeIpToHostNameData(ipToHostNameMap);
+}
+
 // report
-function report(packets) {
+async function report(packets) {
     const map = compact(packets);
+    await resolveLocalHostNames(map);
     reportCompact(map);
     reportTimeFrame(map, HOUR_FORMAT);
     reportTimeFrame(map, DAY_FORMAT);
@@ -171,7 +205,7 @@ function compactProtocols(protocols) {
 }
 
 let packets = [];
-rl.on('line', function(line){
+rl.on('line', async function(line){
     const [
         timestamp,
         frameLength,
@@ -212,7 +246,7 @@ rl.on('line', function(line){
     });
 
     if (isReportIntervalReached(instant)) {
-        report(packets);
+        await report(packets);
         packets = []
     }
 });

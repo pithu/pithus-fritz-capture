@@ -20,7 +20,7 @@
     border: 1px solid darkgray;
 }
 
-.th-ip {
+.th-ip, .th-host {
     text-align: left;
     padding: 2px 10px 2px 10px;
 }
@@ -30,9 +30,13 @@
     padding: 2px 10px 2px 10px;
 }
 
-.td-ip {
+.td-ip, .td-host {
     text-align: left;
     padding: 2px 10px 2px 10px;
+}
+
+.td-host {
+    font-size: small;
 }
 
 .td-byte {

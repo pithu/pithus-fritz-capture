@@ -8,7 +8,10 @@ const { Resolver } = require('dns');
 
 const { Instant, ZonedDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
 
-const WWW_ROOT = process.env.WWW_ROOT || "";
+const DATA_DIR = path.join(process.env.WWW_ROOT || "./", "data");
+if (!fs.existsSync(DATA_DIR)){
+    fs.mkdirSync(DATA_DIR);
+}
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -103,7 +106,7 @@ function reportTimeFrame(map, formatter) {
     const timeFrame = ZonedDateTime.ofInstant(instant, ZoneId.UTC).format(formatter);
 
     // read file that might already exist for that time frame
-    const fileName = path.join(WWW_ROOT, `${timeFrame}.json`);
+    const fileName = path.join(DATA_DIR, `${timeFrame}.json`);
     const data = readJsonFromFile(fileName);
 
     // add and write data
@@ -138,7 +141,7 @@ const DAY_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd');
 const MONTH_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM');
 
 // reverse lookup ips
-const ipToHostNameDataFileName  = path.join(WWW_ROOT, "ipToHostNameMap.json");
+const ipToHostNameDataFileName  = path.join(DATA_DIR, "ipToHostNameMap.json");
 function readIpToHostNameData() {
     if (fs.existsSync(ipToHostNameDataFileName)) {
         const jsonData = fs.readFileSync(ipToHostNameDataFileName, 'utf8');

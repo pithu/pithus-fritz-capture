@@ -19,7 +19,7 @@
         }
 
         let ipToHostNameMap = new Map();
-        $.getJSON("ipToHostNameMap.json", function (data) {
+        $.getJSON("data/ipToHostNameMap.json", function (data) {
             ipToHostNameMap = new Map(data);
         });
         const ipToHostName = (ip) => ipToHostNameMap.get(ip) || "unknown";
@@ -29,7 +29,7 @@
         }
 
         function appendTimeFrame(fileName, selector) {
-            $.getJSON(fileName, function (data) {
+            $.getJSON("data/" + fileName, function (data) {
                 const localIpVolumes = Object.keys(data.local).reduce((acc, localIp) => {
                     acc.push({localIp, ...data.local[localIp]});
                     return acc;

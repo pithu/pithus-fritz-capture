@@ -36,7 +36,7 @@
     const timeSlotUploadSum = ts =>
         d3.sum(ts.values, upload);
 
-    d3.dsv('\t', './fritz-capture.sample.csv').then(function(data) {
+    d3.dsv('\t', './data/fritz-capture.sample.csv').then(function(data) {
         const width = 1000;
         const height = 800;
         const barWidth = 5;

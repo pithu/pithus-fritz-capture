@@ -8,13 +8,20 @@ Docker image that monitors network data volume per local ip.
 # Usage
 
 ```bash
-docker build -t pithu/fritz-capture --build-arg FRITZ_USER=$FRITZ_USER --build-arg FRITZ_PWD=$FRITZ_PWD --build-arg DNS_SERVER=DNS_SERVER .
+docker build -t pithu/fritz-capture --build-arg FRITZ_USER=$FRITZ_USER --build-arg FRITZ_PWD=$FRITZ_PWD --build-arg DNS_SERVER=$DNS_SERVER .
 ```
 ```bash
 docker run -p 8080:80 pithu/fritz-capture
 ```
 
 then open localhost:8080/_index.html.
+
+## Use with persistent monitor data
+
+```bash
+docker volume create pithu-capture-data
+docker run -d -v pithu-capture-data:/opt/fritz-dump/www/data -p 8080:80 pithu/fritz-capture 
+```
  
 # Configuration
 

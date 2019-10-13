@@ -5,7 +5,7 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
 # start web server
-# service nginx start
+service nginx start
 
 # source capture logic
 source ./fritz-capture.sh

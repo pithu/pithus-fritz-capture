@@ -16,8 +16,8 @@ if [ ! -f $SIDFILE ]; then
   touch $SIDFILE
 fi
 
-function startCapture {
-  echo "Trying to login into $FRITZIP as user $FRITZ_USER" 1>&2
+function getSID {
+    echo "Trying to login into $FRITZIP as user $FRITZ_USER" 1>&2
 
   # Request challenge token from Fritz!Box
   CHALLENGE=$(curl -k -s $FRITZIP/login_sid.lua |  grep -o "<Challenge>[a-z0-9]\{8\}" | cut -d'>' -f 2)
@@ -37,6 +37,12 @@ function startCapture {
 
   # Check for successfull authentification
   if [[ $SID =~ ^0+$ ]] ; then echo "Login failed. Did you create & use explicit Fritz!Box users?" 1>&2 ; exit 1 ; fi
+}
+
+function startCapture {
+  echo "About to start capturing." 1>&2
+
+  getSID
 
   echo "Capturing traffic on Fritz!Box interface $IFACE ..." 1>&2
 
@@ -48,11 +54,12 @@ function startCapture {
 }
 
 function stopCapture {
-  SID=$(cat $SIDFILE)
   echo "About to stop capturing." 1>&2
+
+  getSID
+
   wget --no-check-certificate -qO- $FRITZIP/cgi-bin/capture_notimeout?ifaceorminor=$IFACE\&snaplen=\&capture=Stop\&sid=$SID 1>&2
   echo "Capturing stopped!" 1>&2
-  exit 0
 }
 
 export -f startCapture

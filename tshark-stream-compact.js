@@ -13,6 +13,9 @@ if (!fs.existsSync(DATA_DIR)){
     fs.mkdirSync(DATA_DIR);
 }
 
+// interval how often data is written to log files
+const LOG_INTERVAL = 60; // seconds
+
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -183,7 +186,6 @@ async function report(packets) {
 
 // collect input
 let lastTimestamp;
-const LOG_INTERVAL = 10; // seconds
 function isReportIntervalReached(timestamp) {
     if (!lastTimestamp) {
         lastTimestamp = timestamp;

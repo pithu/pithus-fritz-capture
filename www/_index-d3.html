@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Minimal D3 Example</title>
+    <title>Minimal D3 Example (Experimental hack)</title>
     <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
     <style>
 
@@ -36,7 +36,8 @@
     const timeSlotUploadSum = ts =>
         d3.sum(ts.values, upload);
 
-    d3.dsv('\t', './data/fritz-capture.sample.csv').then(function(data) {
+    const d = new Date();
+    d3.dsv('\t', `./data/fritz-capture-${d.getFullYear()}-${d.getMonth()+1}.csv`).then(function(data) {
         const width = 1000;
         const height = 800;
         const barWidth = 5;

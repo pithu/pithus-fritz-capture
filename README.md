@@ -20,7 +20,7 @@ then open http://localhost:8080/_index.html.
 
 ```bash
 docker volume create pithu-capture-data
-docker run -d -v pithu-capture-data:/opt/fritz-dump/www/data -p 8080:80 pithu/fritz-capture 
+docker run -d -v pithu-capture-data:/opt/pithu-fritz-capture/www/data -p 8080:80 pithu/fritz-capture 
 ```
  
 # Configuration

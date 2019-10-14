@@ -24,7 +24,7 @@ ENV FRITZ_IFACE=$FRITZ_IFACE
 
 # Prepare nginx
 # configure nginx according to that in nginx-sites-available-default.conf
-ENV WWW_ROOT=/opt/fritz-dump/www
+ENV WWW_ROOT=/opt/pithu-fritz-capture/www
 RUN mkdir -p $WWW_ROOT/data # here is that capture data stored
 
 COPY www $WWW_ROOT
@@ -32,11 +32,11 @@ COPY nginx-sites-available-default.conf /etc/nginx/sites-available/default
 EXPOSE 80
 
 # Prepare work directory
-ENV WORK_DIR=/opt/fritz-dump
+ENV WORK_DIR=/opt/pithu-fritz-capture
 RUN mkdir -p $WORK_DIR
 WORKDIR $WORK_DIR
 
 COPY tshark-stream-add-timestamp.js tshark-stream-compact.js package.json package-lock.json fritz-capture.sh run.sh $WORK_DIR/
 RUN npm install
 
-ENTRYPOINT ["/opt/fritz-dump/run.sh"]
+ENTRYPOINT ["/opt/pithu-fritz-capture/run.sh"]

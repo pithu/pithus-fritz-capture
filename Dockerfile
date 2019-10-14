@@ -36,7 +36,7 @@ ENV WORK_DIR=/opt/pithu-fritz-capture
 RUN mkdir -p $WORK_DIR
 WORKDIR $WORK_DIR
 
-COPY tshark-stream-add-timestamp.js tshark-stream-compact.js package.json package-lock.json fritz-capture.sh run.sh $WORK_DIR/
+COPY tshark-stream-add-timestamp.js tshark-stream-compact.js resolveHostNamesByIp.js package.json package-lock.json fritz-capture.sh run.sh $WORK_DIR/
 RUN npm install
 
 ENTRYPOINT ["/opt/pithu-fritz-capture/run.sh"]

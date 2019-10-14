@@ -69,7 +69,11 @@ function reportCompact(map, timeFrame) {
         );
     }
 
-    for (const entry of Object.values(map)) {
+    // sort by timestamp
+    const entries = Object.values(map);
+    entries.sort((a, b) => a.instant.compareTo(b.instant));
+
+    for (const entry of entries) {
         let line = '';
         line += `${entry.instant.toString()}\t`;
         line += `${entry.localIp}\t`;

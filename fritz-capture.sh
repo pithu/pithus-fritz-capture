@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# This is the address of the router
-FRITZIP=http://fritz.box
-
 # This is the WAN interface
 IFACE="2-0"
 SIDFILE="/tmp/fritz.sid"
@@ -17,10 +14,10 @@ if [ ! -f $SIDFILE ]; then
 fi
 
 function getSID {
-    echo "Trying to login into $FRITZIP as user $FRITZ_USER" 1>&2
+    echo "Trying to login into $FRITZ_URI as user $FRITZ_USER" 1>&2
 
   # Request challenge token from Fritz!Box
-  CHALLENGE=$(curl -k -s $FRITZIP/login_sid.lua |  grep -o "<Challenge>[a-z0-9]\{8\}" | cut -d'>' -f 2)
+  CHALLENGE=$(curl -k -s $FRITZ_URI/login_sid.lua |  grep -o "<Challenge>[a-z0-9]\{8\}" | cut -d'>' -f 2)
 
   # Very proprieatry way of AVM: Create a authentication token by hashing challenge token with password
   HASH=$(perl -MPOSIX -e '
@@ -31,7 +28,7 @@ function getSID {
       print $md5;
     ' -- "$CHALLENGE" "$FRITZ_PWD")
 
-  curl -k -s "$FRITZIP/login_sid.lua" -d "response=$CHALLENGE-$HASH" -d 'username='${FRITZ_USER} | grep -o "<SID>[a-z0-9]\{16\}" | cut -d'>' -f 2 > $SIDFILE
+  curl -k -s "$FRITZ_URI/login_sid.lua" -d "response=$CHALLENGE-$HASH" -d 'username='${FRITZ_USER} | grep -o "<SID>[a-z0-9]\{16\}" | cut -d'>' -f 2 > $SIDFILE
 
   SID=$(cat $SIDFILE)
 
@@ -44,21 +41,21 @@ function startCapture {
 
   getSID
 
-  echo "Capturing traffic on Fritz!Box interface $IFACE ..." 1>&2
+  echo "Capturing traffic on Fritz!Box interface $FRITZ_IFACE ..." 1>&2
 
-  wget --no-check-certificate -qO- $FRITZIP/cgi-bin/capture_notimeout?ifaceorminor=$IFACE\&snaplen=\&capture=Start\&sid=$SID | tshark -T fields -e frame.len -e frame.protocols -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -r -
+  wget --no-check-certificate -qO- $FRITZ_URI/cgi-bin/capture_notimeout?ifaceorminor=$FRITZ_IFACE\&snaplen=\&capture=Start\&sid=$SID | tshark -T fields -e frame.len -e frame.protocols -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -r -
 
-  # wget --no-check-certificate -qO- $FRITZIP/cgi-bin/capture_notimeout?ifaceorminor=$IFACE\&snaplen=1600\&capture=Start\&sid=$SID | tshark -T json -r -
+  # wget --no-check-certificate -qO- $FRITZ_URI/cgi-bin/capture_notimeout?ifaceorminor=$FRITZ_IFACE\&snaplen=1600\&capture=Start\&sid=$SID | tshark -T json -r -
 
   echo "Ended unexpected. Good by!" 1>&2
 }
 
 function stopCapture {
-  echo "About to stop capturing." 1>&2
+  echo "About to stop capturing, if its still running." 1>&2
 
   getSID
 
-  wget --no-check-certificate -qO- $FRITZIP/cgi-bin/capture_notimeout?ifaceorminor=$IFACE\&snaplen=\&capture=Stop\&sid=$SID 1>&2
+  wget --no-check-certificate -qO- $FRITZ_URI/cgi-bin/capture_notimeout?ifaceorminor=$FRITZ_IFACE\&snaplen=\&capture=Stop\&sid=$SID 1>&2
   echo "Capturing stopped!" 1>&2
 }
 

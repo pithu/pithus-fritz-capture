@@ -11,12 +11,16 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 RUN apt-get -y install nodejs
 
 # set env vars
-ARG FRITZ_USER
+ARG FRITZ_USER=admin
 ARG FRITZ_PWD
-ARG DNS_SERVER
+ARG DNS_SERVER=192.168.2.1
+ARG FRITZ_URI=http://fritz.box
+ARG FRITZ_IFACE=2-0
 ENV FRITZ_USER=$FRITZ_USER
 ENV FRITZ_PWD=$FRITZ_PWD
 ENV DNS_SERVER=$DNS_SERVER
+ENV FRITZ_URI=$FRITZ_URI
+ENV FRITZ_IFACE=$FRITZ_IFACE
 
 # Prepare nginx
 # configure nginx according to that in nginx-sites-available-default.conf

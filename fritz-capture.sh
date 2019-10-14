@@ -1,14 +1,15 @@
 #!/bin/bash
 
-# This is the WAN interface
-IFACE="2-0"
-SIDFILE="/tmp/fritz.sid"
-
-# check config
+# check params
 if [ -z "$FRITZ_PWD" ] || [ -z "$FRITZ_USER" ]  ; then
-  echo "Username/Password empty. Specify env FRITZ_USER and FRITZ_PWD" 1>&2 ; exit 1;
+  echo "Username and/ or Password not set. Specify env FRITZ_USER and FRITZ_PWD" 1>&2 ; exit 1;
 fi
 
+if [ -z "$FRITZ_URI" ] || [ -z "$FRITZ_IFACE" ]  ; then
+  echo "Frity!Box uri and/ or capture interface not set. Specify env FRITZ_URI and FRITZ_IFACE" 1>&2 ; exit 1;
+fi
+
+SIDFILE="/tmp/fritz.sid"
 if [ ! -f $SIDFILE ]; then
   touch $SIDFILE
 fi

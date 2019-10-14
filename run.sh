@@ -11,7 +11,7 @@ service nginx start
 source ./fritz-capture.sh
 
 # cracefully shutdown
-trap "stopCapture; exit 0;" SIGHUP SIGINT SIGTERM
+trap "stopCapture; exit 0;" SIGTERM
 
 # stop capturing, might still running
 stopCapture

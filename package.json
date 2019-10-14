@@ -1,10 +1,14 @@
 {
   "name": "fritz-capture",
   "version": "1.0.0",
-  "description": "capture fritzbox wan interface",
-  "main": "compact-tshark-stream.js",
-  "author": "",
+  "description": "capture Fritz!Box wan interface, report data volume per local ip",
+  "main": "tshark-stream-compact.js",
+  "author": "pithu",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pithu/pithus-fritz-capture.git"
+  },
   "dependencies": {
     "@js-joda/core": "^1.11.0"
   }

@@ -3,7 +3,7 @@ pithu's Fritz!Box Capture
 
 # Motivation
 
-Docker image that monitors network data volume per local ip. 
+Docker image that monitors Fritz!Box network data volume, per local ip. 
 
 # Usage
 
@@ -14,7 +14,7 @@ docker build -t pithu/fritz-capture --build-arg FRITZ_USER=$FRITZ_USER --build-a
 docker run -p 8080:80 pithu/fritz-capture
 ```
 
-then open localhost:8080/_index.html.
+then open http://localhost:8080/_index.html.
 
 ## Use with persistent monitor data
 
@@ -38,3 +38,9 @@ Docker build args and there default values:
   typically the ip of your router. 
   It's required to resolve local host names for local ips,
   default is `192.168.2.1`.
+
+# Screenshots
+
+Screenshot of the application (http://localhost:8080/_index.html)
+
+![Screenshot of the application](./media/screenshot-01.png)

@@ -17,4 +17,4 @@ trap "stopCapture; exit 0;" SIGHUP SIGINT SIGTERM
 stopCapture
 
 # start capture
-startCapture | ./tshark-stream-add-timestamp.js - | ./tshark-stream-compact.js - >> $WWW_ROOT/data/fritz-capture.csv
+startCapture | ./tshark-stream-add-timestamp.js - | ./tshark-stream-compact.js -

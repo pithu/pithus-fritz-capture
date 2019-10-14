@@ -6,7 +6,7 @@ const readline = require('readline');
 const { promisify } = require('util');
 const { Resolver } = require('dns');
 
-const { Instant, ZonedDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
+const { Instant, LocalDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
 
 const DATA_DIR = path.join(process.env.WWW_ROOT || "./", "data");
 if (!fs.existsSync(DATA_DIR)){
@@ -56,15 +56,15 @@ function compact(packets) {
 }
 
 // raw reporting
-let isHeaderPrinted = false;
-function printHeader() {
-    if (!isHeaderPrinted) {
-        isHeaderPrinted = true;
-        console.log('time\tlocal_ip\tremote_ip\tremote_port\tprotocol\tdownload\tupload\t');
+function reportCompact(map, timeFrame) {
+    const fileName = path.join(DATA_DIR, `fritz-capture-${timeFrame}.csv`);
+    if (!fs.existsSync(fileName)) {
+        fs.appendFileSync(
+            fileName,
+            'time\tlocal_ip\tremote_ip\tremote_port\tprotocol\tdownload\tupload\n',
+            'utf8'
+        );
     }
-}
-function reportCompact(map) {
-    printHeader();
 
     for (const entry of Object.values(map)) {
         let line = '';
@@ -74,8 +74,8 @@ function reportCompact(map) {
         line += `${entry.remotePort}\t`;
         line += `${entry.protocol}\t`;
         line += `${entry.download}\t`;
-        line += `${entry.upload}\t`;
-        console.log(line);
+        line += `${entry.upload}\n`;
+        fs.appendFileSync(fileName, line, 'utf8');
     }
 }
 
@@ -95,22 +95,13 @@ function writeJsonToFile(fileName, jsonData) {
     fs.writeFileSync(fileName, jsonData, 'utf8');
 }
 
-function reportTimeFrame(map, formatter) {
-    const entries = Object.values(map);
-    if (!entries || entries.length === 0) {
-        return;
-    }
-
-    // detect time frame by a random entry of the current interval
-    const instant = entries[0].instant;
-    const timeFrame = ZonedDateTime.ofInstant(instant, ZoneId.UTC).format(formatter);
-
+function reportTimeFrame(map, timeFrame) {
     // read file that might already exist for that time frame
     const fileName = path.join(DATA_DIR, `${timeFrame}.json`);
     const data = readJsonFromFile(fileName);
 
     // add and write data
-    for (const entry of entries) {
+    for (const entry of Object.values(map)) {
         if (!data.local[entry.localIp]) {
             data.local[entry.localIp] = {
                 download: 0,
@@ -176,12 +167,18 @@ async function resolveLocalHostNames(map) {
 
 // report
 async function report(packets) {
+    if (packets.length === 0){
+        return;
+    }
+    // report to timeStamp of first packet
+    const firstTimeStamp = LocalDateTime.ofInstant(packets[0].instant, ZoneId.UTC);
+
     const map = compact(packets);
     await resolveLocalHostNames(map);
-    reportCompact(map);
-    reportTimeFrame(map, HOUR_FORMAT);
-    reportTimeFrame(map, DAY_FORMAT);
-    reportTimeFrame(map, MONTH_FORMAT);
+    reportCompact(map, firstTimeStamp.format(MONTH_FORMAT));
+    reportTimeFrame(map, firstTimeStamp.format(HOUR_FORMAT));
+    reportTimeFrame(map, firstTimeStamp.format(DAY_FORMAT));
+    reportTimeFrame(map, firstTimeStamp.format(MONTH_FORMAT));
 }
 
 // collect input

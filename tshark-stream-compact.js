@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const { Instant, LocalDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
-const resolveHostNamesByIp = require('./resolveHostNamesByIp');
+const resolveHostNamesByIp = require('./resolve-hostnames-by-ip')();
 
 const DATA_DIR = path.join(process.env.WWW_ROOT || "./", "data");
 if (!fs.existsSync(DATA_DIR)){

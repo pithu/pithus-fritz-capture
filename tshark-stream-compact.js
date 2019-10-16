@@ -217,7 +217,12 @@ rl.on('line', async function(line){
         udpDstPort,
     ] = line.split('\t');
 
-    // in some cases (ip tunnel) there is more then one ip reported by tshark,
+    // filter ip6 packets
+    if (!ipSrc || !ipDst) {
+        return;
+    }
+
+    // in some cases (e.g. ip tunnel) there is more then one ip reported by tshark,
     // we take the last one in that case
     const ipSrcFixed = ipSrc.split(",").slice(-1)[0];
     const ipDstFixed = ipDst.split(",").slice(-1)[0];
@@ -229,11 +234,6 @@ rl.on('line', async function(line){
     const remotePort = isUpload ? (tcpDstPort || udpDstPort) : (tcpSrcPort || udpSrcPort);
     const protocol = compactProtocols(frameProtocols);
     const frameLen = parseInt(frameLength, 10) || 0;
-
-    // filter ip6 packets
-    if (!localIp || !remoteIp || !remotePort) {
-        return;
-    }
 
     packets.push({
         instant,

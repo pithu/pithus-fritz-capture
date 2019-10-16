@@ -5,11 +5,11 @@
 }
 
 .profile {
-    width: 40%;
-    box-shadow: 10px 10px darkgray;
+    width: 25em;
+    box-shadow: 0.5em 0.5em darkgray;
     background-color: lightblue;
-    margin: 20px;
-    padding: 20px;
+    margin: 1em;
+    padding: 1em;
 }
 
 .volume-table {
@@ -22,17 +22,17 @@
 
 .th-ip, .th-host {
     text-align: left;
-    padding: 2px 10px 2px 10px;
+    padding: 2px 0.5em 2px 0.5em;
 }
 
 .th-byte {
     text-align: right;
-    padding: 2px 10px 2px 10px;
+    padding: 2px 0.5em 2px 0.5em;
 }
 
 .td-ip, .td-host {
     text-align: left;
-    padding: 2px 10px 2px 10px;
+    padding: 2px 0.5em 2px 0.5em;
 }
 
 .td-host {
@@ -41,6 +41,6 @@
 
 .td-byte {
     text-align: right;
-    padding: 2px 10px 2px 10px;
+    padding: 2px 0.5em 2px 0.5em;
 }
 

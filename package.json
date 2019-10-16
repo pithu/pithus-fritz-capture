@@ -5,6 +5,9 @@
   "main": "tshark-stream-compact.js",
   "author": "pithu",
   "license": "ISC",
+  "scripts": {
+    "test": "mocha"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/pithu/pithus-fritz-capture.git"

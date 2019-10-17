@@ -28,7 +28,7 @@ ENV WWW_ROOT=/opt/pithu-fritz-capture/www
 RUN mkdir -p $WWW_ROOT/data # here is that capture data stored
 
 COPY www $WWW_ROOT
-COPY nginx-sites-available-default.conf /etc/nginx/sites-available/default
+COPY conf/nginx-sites-available-default.conf /etc/nginx/sites-available/default
 EXPOSE 80
 
 # Prepare work directory

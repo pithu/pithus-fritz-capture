@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { Resolver } = require('dns');
 
-const resolveHostNamesByIp = require('../resolve-hostnames-by-ip');
+const resolveHostNamesByIp = require('../src/resolve-hostnames-by-ip');
 
 describe('resolveHostNamesByIp', () => {
     it('should resolve an ip', async () => {

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { Instant } = require('@js-joda/core');
 const { spawn } = require('child_process');
 
-const addTimestampScript = './tshark-stream-add-timestamp.js';
+const addTimestampScript = './src/tshark-stream-add-timestamp.js';
 
 describe('tshark-stream-add-timestamp', () => {
     const callAddTimestampScript = (lines) => {

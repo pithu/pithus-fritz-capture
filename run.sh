@@ -17,4 +17,4 @@ trap "stopCapture; exit 0;" SIGTERM
 stopCapture
 
 # start capture
-startCapture | ./tshark-stream-add-timestamp.js - | ./tshark-stream-compact.js -
+startCapture | ./src/tshark-stream-add-timestamp.js - | ./src/tshark-stream-compact.js -

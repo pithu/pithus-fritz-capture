@@ -204,7 +204,7 @@ function compactProtocols(protocols) {
 }
 
 let packets = [];
-rl.on('line', async function(line){
+async function consumeLine(line) {
     const [
         timestamp,
         frameLength,
@@ -248,5 +248,14 @@ rl.on('line', async function(line){
     if (isReportIntervalReached(instant)) {
         await report(packets);
         packets = []
+    }
+}
+
+rl.on('line', async function(line){
+    try {
+        await consumeLine(line);
+    } catch (err) {
+        //  log and swallow all errors
+        console.log('unexpected error: ', err)
     }
 });

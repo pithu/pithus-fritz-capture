@@ -23,6 +23,11 @@ docker volume create pithu-capture-data
 docker run -d -v pithu-capture-data:/opt/pithu-fritz-capture/www/data -p 8080:80 pithu/fritz-capture 
 ```
  
+## Use docker restart option
+
+wget/ tshark fails from time to time, therefore it is recommend 
+to run the docker container with the `--restart unless-stopped` option. 
+ 
 # Configuration
 
 Fritz!Box must be accessible per basic auth.

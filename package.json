@@ -1,6 +1,6 @@
 {
   "name": "fritz-capture",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "capture Fritz!Box wan interface, report data volume per local ip",
   "main": "src/tshark-stream-compact.js",
   "author": "pithu",

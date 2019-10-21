@@ -15,7 +15,7 @@ if [ ! -f $SIDFILE ]; then
 fi
 
 function getSID {
-    echo "Trying to login into $FRITZ_URI as user $FRITZ_USER" 1>&2
+    echo "$(date): Trying to login into $FRITZ_URI as user $FRITZ_USER" 1>&2
 
   # Request challenge token from Fritz!Box
   CHALLENGE=$(curl -k -s $FRITZ_URI/login_sid.lua |  grep -o "<Challenge>[a-z0-9]\{8\}" | cut -d'>' -f 2)
@@ -38,26 +38,26 @@ function getSID {
 }
 
 function startCapture {
-  echo "About to start capturing." 1>&2
+  echo "$(date): About to start capturing." 1>&2
 
   getSID
 
-  echo "Capturing traffic on Fritz!Box interface $FRITZ_IFACE ..." 1>&2
+  echo "$(date): Capturing traffic on Fritz!Box interface $FRITZ_IFACE ..." 1>&2
 
   wget --no-check-certificate -qO- $FRITZ_URI/cgi-bin/capture_notimeout?ifaceorminor=$FRITZ_IFACE\&snaplen=\&capture=Start\&sid=$SID | tshark -T fields -e frame.len -e frame.protocols -e ip.src -e ip.dst -e tcp.srcport -e tcp.dstport -e udp.srcport -e udp.dstport -r -
 
   # wget --no-check-certificate -qO- $FRITZ_URI/cgi-bin/capture_notimeout?ifaceorminor=$FRITZ_IFACE\&snaplen=1600\&capture=Start\&sid=$SID | tshark -T json -r -
 
-  echo "Ended unexpected. Good by!" 1>&2
+  echo  "$(date): Ended unexpected. Good by! " 1>&2
 }
 
 function stopCapture {
-  echo "About to stop capturing, if its still running." 1>&2
+  echo "$(date): About to stop capturing, if its still running." 1>&2
 
   getSID
 
   wget --no-check-certificate -qO- $FRITZ_URI/cgi-bin/capture_notimeout?ifaceorminor=$FRITZ_IFACE\&snaplen=\&capture=Stop\&sid=$SID 1>&2
-  echo "Capturing stopped!" 1>&2
+  echo "$(date): Capturing stopped! " 1>&2
 }
 
 export -f startCapture

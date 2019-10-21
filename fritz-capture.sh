@@ -34,7 +34,7 @@ function getSID {
   SID=$(cat $SIDFILE)
 
   # Check for successfull authentification
-  if [[ $SID =~ ^0+$ ]] ; then echo "Login failed. Did you create & use explicit Fritz!Box users?" 1>&2 ; exit 1 ; fi
+  if [ -z "${SID}" ] || [[ $SID =~ ^0+$ ]] ; then echo "Login failed. Did you create & use explicit Fritz!Box users?" 1>&2 ; exit 1 ; fi
 }
 
 function startCapture {
@@ -62,4 +62,5 @@ function stopCapture {
 
 export -f startCapture
 export -f stopCapture
+export -f getSID
 

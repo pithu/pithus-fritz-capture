@@ -5,7 +5,7 @@
 }
 
 .profile {
-    width: 25em;
+    min-width: 25em;
     box-shadow: 0.5em 0.5em darkgray;
     background-color: lightblue;
     margin: 1em;

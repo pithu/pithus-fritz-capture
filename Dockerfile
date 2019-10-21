@@ -36,7 +36,8 @@ ENV WORK_DIR=/opt/pithu-fritz-capture
 RUN mkdir -p $WORK_DIR
 WORKDIR $WORK_DIR
 
-COPY src/*.js package*.json fritz-capture.sh run.sh $WORK_DIR/
+COPY src/*.js $WORK_DIR/src/
+COPY package*.json fritz-capture.sh run.sh $WORK_DIR/
 RUN npm install
 
 ENTRYPOINT ["/opt/pithu-fritz-capture/run.sh"]

@@ -5,7 +5,7 @@
 }
 
 .profile {
-    min-width: 25em;
+    width: 27em;
     box-shadow: 0.5em 0.5em darkgray;
     background-color: lightblue;
     margin: 1em;
@@ -37,10 +37,12 @@
 
 .td-host {
     font-size: small;
+    width: 10em;
 }
 
 .td-byte {
     text-align: right;
     padding: 2px 0.5em 2px 0.5em;
+    white-space: nowrap;
 }
 

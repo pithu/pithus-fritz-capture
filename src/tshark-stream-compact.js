@@ -12,7 +12,7 @@ if (!fs.existsSync(DATA_DIR)){
 }
 
 // interval how often data is written to log files
-const LOG_INTERVAL = 60; // seconds
+const REPORT_INTERVAL = process.env.REPORT_INTERVAL || 60; // seconds
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -178,14 +178,14 @@ async function report(packets) {
 }
 
 // collect input
-let lastTimestamp;
+let lastReportTimestamp;
 function isReportIntervalReached(timestamp) {
-    if (!lastTimestamp) {
-        lastTimestamp = timestamp;
+    if (!lastReportTimestamp) {
+        lastReportTimestamp = timestamp;
         return false
     }
-    if (timestamp.epochSecond() - lastTimestamp.epochSecond() > LOG_INTERVAL) {
-        lastTimestamp = timestamp;
+    if (timestamp.epochSecond() - lastReportTimestamp.epochSecond() > REPORT_INTERVAL) {
+        lastReportTimestamp = timestamp;
         return true;
     }
     return false;
@@ -235,6 +235,11 @@ async function consumeLine(line) {
     const protocol = compactProtocols(frameProtocols);
     const frameLen = parseInt(frameLength, 10) || 0;
 
+    if (isReportIntervalReached(instant)) {
+        await report(packets);
+        packets = []
+    }
+
     packets.push({
         instant,
         isUpload,
@@ -244,11 +249,6 @@ async function consumeLine(line) {
         frameLen,
         protocol,
     });
-
-    if (isReportIntervalReached(instant)) {
-        await report(packets);
-        packets = []
-    }
 }
 
 rl.on('line', async function(line){

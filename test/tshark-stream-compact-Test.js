@@ -58,6 +58,9 @@ describe('tshark-stream-compact-Test', () => {
     const readJSONFile = fileName =>
         JSON.parse(fs.readFileSync(path.join(DATA_DIR, fileName), 'utf8'));
 
+    const readFile = fileName =>
+        fs.readFileSync(path.join(DATA_DIR, fileName), 'utf8');
+
     beforeEach(() => {
         cleanUpDataDir();
     });
@@ -134,8 +137,8 @@ describe('tshark-stream-compact-Test', () => {
 
         await pipe2script(dataLines, false);
 
-        const dailyReport = readJSONFile('2019-10.json');
-        expect(dailyReport).to.eql({
+        const monthlyReport = readJSONFile('2019-10.json');
+        expect(monthlyReport).to.eql({
             local: {
                 '192.168.2.100': { download: 2233, upload: 37 },
                 '192.168.2.101': { download: 8003, upload: 29 },
@@ -144,5 +147,44 @@ describe('tshark-stream-compact-Test', () => {
                 '128.65.210.180': { download: 10236, upload: 66 }
             },
          })
+    })
+
+    it('should write one monthly csv file', async () => {
+        const dataLines = [
+            // one month before
+            tcpDownload('2019-09-27T03:40:00.001Z', 2003, '192.168.2.101'),
+
+            // this month
+            tcpDownload('2019-10-27T03:40:00.001Z', 2003, '192.168.2.100'),
+            tcpUpload('2019-10-27T14:40:01.001Z', 20, '192.168.2.100'),
+            tcpDownload('2019-10-27T14:40:01.101Z', 207, '192.168.2.100'),
+            tcpDownload('2019-10-28T23:40:02.001Z', 4000, '192.168.2.101'),
+            tcpDownload('2019-10-28T23:40:02.002Z', 1000, '192.168.2.101'),
+            tcpDownload('2019-10-28T23:40:02.002Z', 23, '192.168.2.100'),
+            tcpDownload('2019-10-28T23:40:02.003Z', 29, '192.168.2.101'),
+            tcpUpload('2019-10-28T23:40:02.004Z', 29, '192.168.2.101'),
+            tcpUpload('2019-10-29T23:40:02.002Z', 17, '192.168.2.100'),
+            tcpDownload('2019-10-30T23:40:02.001Z', 4003, '192.168.2.101'),
+
+            // trigger write, one month later
+            tcpDownload('2019-11-28T14:40:00.000Z', 2001, '192.168.2.100'),
+        ];
+
+        await pipe2script(dataLines, false);
+
+        const monthlyCSVReport = readFile('fritz-capture-2019-10.csv')
+            .split("\n")
+            .filter(line => line && line.length > 0);
+
+        expect(monthlyCSVReport).to.have.lengthOf(9);
+        expect(monthlyCSVReport[0]).to.eql('time\tlocal_ip\tremote_ip\tremote_port\tprotocol\tdownload\tupload');
+        expect(monthlyCSVReport).to.include('2019-10-27T03:40:00.001Z\t192.168.2.100\t128.65.210.180\t234439\t\t2003\t0');
+        expect(monthlyCSVReport).to.include('2019-10-27T14:40:01.001Z\t192.168.2.100\t128.65.210.180\t443\t\t0\t20');
+        expect(monthlyCSVReport).to.include('2019-10-27T14:40:01.101Z\t192.168.2.100\t128.65.210.180\t234439\t\t207\t0');
+        expect(monthlyCSVReport).to.include('2019-10-28T23:40:02.001Z\t192.168.2.101\t128.65.210.180\t234439\t\t5029\t0');
+        expect(monthlyCSVReport).to.include('2019-10-28T23:40:02.002Z\t192.168.2.100\t128.65.210.180\t234439\t\t23\t0');
+        expect(monthlyCSVReport).to.include('2019-10-28T23:40:02.004Z\t192.168.2.101\t128.65.210.180\t443\t\t0\t29');
+        expect(monthlyCSVReport).to.include('2019-10-29T23:40:02.002Z\t192.168.2.100\t128.65.210.180\t443\t\t0\t17');
+        expect(monthlyCSVReport).to.include('2019-10-30T23:40:02.001Z\t192.168.2.101\t128.65.210.180\t234439\t\t4003\t0');
     })
 });

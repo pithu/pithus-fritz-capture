@@ -212,6 +212,12 @@ const LineConsumer = () => {
         return false;
     }
 
+    async function flushReport() {
+        const _packets = packets.slice(0);
+        packets = [];
+        await report(_packets);
+    }
+
     async function performReport(packet) {
         if (isReportIntervalReached(packet.instant)) {
             const _packets = packets.slice(0);
@@ -266,7 +272,7 @@ const LineConsumer = () => {
 
     return {
         consumeLine,
-        performReport,
+        flushReport,
     }
 }
 
@@ -283,7 +289,7 @@ rl.on('line', async function(line){
 
 rl.on('close', async function(){
     try {
-        await lineConsumer.performReport();
+        await lineConsumer.flushReport();
     } catch (err) {
         //  log and swallow all errors
         console.log('unexpected error: ', err)

@@ -87,7 +87,7 @@ describe('tshark-stream-compact-Test', () => {
                 '128.65.210.180': { download: 4003, upload: 10 }
             },
          })
-    })
+    });
 
     it('should write one daily report', async () => {
         const dataLines = [
@@ -109,6 +109,39 @@ describe('tshark-stream-compact-Test', () => {
              },
             remote: {
                 '128.65.210.180': { download: 6210, upload: 20 }
+            },
+         })
+    });
+
+    it('should write one monthly report', async () => {
+        const dataLines = [
+            // one month before
+            tcpDownload('2019-09-27T03:40:00.001Z', 2003, '192.168.2.101'),
+
+            // this month
+            tcpDownload('2019-10-27T03:40:00.001Z', 2003, '192.168.2.100'),
+            tcpUpload('2019-10-27T14:40:01.001Z', 20, '192.168.2.100'),
+            tcpDownload('2019-10-27T14:40:01.101Z', 207, '192.168.2.100'),
+            tcpDownload('2019-10-27T23:40:02.001Z', 4000, '192.168.2.101'),
+            tcpDownload('2019-10-28T23:40:02.001Z', 23, '192.168.2.100'),
+            tcpUpload('2019-10-29T23:40:02.001Z', 29, '192.168.2.101'),
+            tcpUpload('2019-10-29T23:40:02.002Z', 17, '192.168.2.100'),
+            tcpDownload('2019-10-30T23:40:02.001Z', 4003, '192.168.2.101'),
+
+            // trigger write, one month later
+            tcpDownload('2019-11-28T14:40:00.000Z', 2001, '192.168.2.100'),
+        ];
+
+        await pipe2script(dataLines, false);
+
+        const dailyReport = readJSONFile('2019-10.json');
+        expect(dailyReport).to.eql({
+            local: {
+                '192.168.2.100': { download: 2233, upload: 37 },
+                '192.168.2.101': { download: 8003, upload: 29 },
+             },
+            remote: {
+                '128.65.210.180': { download: 10236, upload: 66 }
             },
          })
     })

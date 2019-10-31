@@ -44,14 +44,14 @@ describe('tshark-stream-compact-Test', () => {
             tcp_dstport: '443',
         });
 
-    const pipe2script = (dataLines) =>
+    const pipe2script = (dataLines, debug = false) =>
         _pipe2script(
             tsharkStreamCompactScript,
             dataLines, {
                 env: {
                     'WWW_ROOT': TEST_DIR,
                 },
-                debug: false,
+                debug,
             },
         );
 
@@ -71,14 +71,13 @@ describe('tshark-stream-compact-Test', () => {
             tcpDownload('2019-10-27T13:40:00.001Z', 1003, '192.168.2.100'),
             tcpUpload('2019-10-27T13:40:01.001Z', 10, '192.168.2.100'),
             tcpDownload('2019-10-27T13:40:02.001Z', 3000, '192.168.2.101'),
-            // trigger write one hour later
+            // trigger write, one hour later
             tcpDownload('2019-10-27T14:40:00.000Z', 1001, '192.168.2.100'),
         ];
 
-        const lines = await pipe2script(dataLines);
+        await pipe2script(dataLines);
 
         const hourReport = readJSONFile('2019-10-27T13.json');
-
         expect(hourReport).to.eql({
             local: {
                 '192.168.2.100': { download: 1003, upload: 10 },
@@ -86,6 +85,30 @@ describe('tshark-stream-compact-Test', () => {
              },
             remote: {
                 '128.65.210.180': { download: 4003, upload: 10 }
+            },
+         })
+    })
+
+    it('should write one daily report', async () => {
+        const dataLines = [
+            tcpDownload('2019-10-27T03:40:00.001Z', 2003, '192.168.2.100'),
+            tcpUpload('2019-10-27T14:40:01.001Z', 20, '192.168.2.100'),
+            tcpDownload('2019-10-27T14:40:01.101Z', 207, '192.168.2.100'),
+            tcpDownload('2019-10-27T23:40:02.001Z', 4000, '192.168.2.101'),
+            // trigger write, one day later
+            tcpDownload('2019-10-28T14:40:00.000Z', 2001, '192.168.2.100'),
+        ];
+
+        await pipe2script(dataLines, false);
+
+        const dailyReport = readJSONFile('2019-10-27.json');
+        expect(dailyReport).to.eql({
+            local: {
+                '192.168.2.100': { download: 2210, upload: 20 },
+                '192.168.2.101': { download: 4000, upload: 0 },
+             },
+            remote: {
+                '128.65.210.180': { download: 6210, upload: 20 }
             },
          })
     })

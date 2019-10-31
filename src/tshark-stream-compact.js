@@ -3,7 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
-const { Instant, LocalDateTime, ZoneId, DateTimeFormatter } = require('@js-joda/core');
+const {
+    ChronoUnit, Instant, LocalDateTime, ZoneId, DateTimeFormatter,
+} = require('@js-joda/core');
 const resolveHostNamesByIp = require('./resolve-hostnames-by-ip')();
 
 const DATA_DIR = path.join(process.env.WWW_ROOT || "./", "data");
@@ -178,18 +180,6 @@ async function report(packets) {
 }
 
 // collect input
-let lastReportTimestamp;
-function isReportIntervalReached(timestamp) {
-    if (!lastReportTimestamp) {
-        lastReportTimestamp = timestamp;
-        return false
-    }
-    if (timestamp.epochSecond() - lastReportTimestamp.epochSecond() > REPORT_INTERVAL) {
-        lastReportTimestamp = timestamp;
-        return true;
-    }
-    return false;
-}
 
 function isLocalIp(ip) {
     if (!ip) return false;
@@ -203,57 +193,97 @@ function compactProtocols(protocols) {
     return protocols && protocols.split(':').slice(2, 8).join(':')
 }
 
-let packets = [];
-async function consumeLine(line) {
-    const [
-        timestamp,
-        frameLength,
-        frameProtocols,
-        ipSrc,
-        ipDst,
-        tcpSrcPort,
-        tcpDstPort,
-        udpSrcPort,
-        udpDstPort,
-    ] = line.split('\t');
+const LineConsumer = () => {
+    let lastReportTimestamp;
+    let packets = [];
 
-    // filter ip6 packets
-    if (!ipSrc || !ipDst) {
-        return;
+    // truncate to full minutes to prevent overlaps to next hour/ day or month
+    const truncate = temporal => temporal.truncatedTo(ChronoUnit.MINUTES);
+
+    const isReportIntervalReached = (timestamp) => {
+        if (!lastReportTimestamp) {
+            lastReportTimestamp = truncate(timestamp);
+            return false
+        }
+        if (timestamp.epochSecond() - lastReportTimestamp.epochSecond() > REPORT_INTERVAL) {
+            lastReportTimestamp = truncate(timestamp);
+            return true;
+        }
+        return false;
     }
 
-    // in some cases (e.g. ip tunnel) there is more then one ip reported by tshark,
-    // we take the last one in that case
-    const ipSrcFixed = ipSrc.split(",").slice(-1)[0];
-    const ipDstFixed = ipDst.split(",").slice(-1)[0];
-
-    const instant = Instant.parse(timestamp);
-    const isUpload = isLocalIp(ipSrcFixed);
-    const localIp = isUpload ? ipSrcFixed : ipDstFixed;
-    const remoteIp = isUpload ? ipDstFixed : ipSrcFixed;
-    const remotePort = isUpload ? (tcpDstPort || udpDstPort) : (tcpSrcPort || udpSrcPort);
-    const protocol = compactProtocols(frameProtocols);
-    const frameLen = parseInt(frameLength, 10) || 0;
-
-    if (isReportIntervalReached(instant)) {
-        await report(packets);
-        packets = []
+    async function performReport(packet) {
+        if (isReportIntervalReached(packet.instant)) {
+            const _packets = packets.slice(0);
+            packets = [packet];
+            await report(_packets);
+        } else {
+            packets.push(packet)
+        }
     }
 
-    packets.push({
-        instant,
-        isUpload,
-        localIp,
-        remoteIp,
-        remotePort,
-        frameLen,
-        protocol,
-    });
+    async function consumeLine(line) {
+        const [
+            timestamp,
+            frameLength,
+            frameProtocols,
+            ipSrc,
+            ipDst,
+            tcpSrcPort,
+            tcpDstPort,
+            udpSrcPort,
+            udpDstPort,
+        ] = line.split('\t');
+
+        // filter ip6 packets
+        if (!ipSrc || !ipDst) {
+            return;
+        }
+
+        // in some cases (e.g. ip tunnel) there is more then one ip reported by tshark,
+        // we take the last one in that case
+        const ipSrcFixed = ipSrc.split(",").slice(-1)[0];
+        const ipDstFixed = ipDst.split(",").slice(-1)[0];
+
+        const instant = Instant.parse(timestamp);
+        const isUpload = isLocalIp(ipSrcFixed);
+        const localIp = isUpload ? ipSrcFixed : ipDstFixed;
+        const remoteIp = isUpload ? ipDstFixed : ipSrcFixed;
+        const remotePort = isUpload ? (tcpDstPort || udpDstPort) : (tcpSrcPort || udpSrcPort);
+        const protocol = compactProtocols(frameProtocols);
+        const frameLen = parseInt(frameLength, 10) || 0;
+
+        await performReport({
+            instant,
+            isUpload,
+            localIp,
+            remoteIp,
+            remotePort,
+            frameLen,
+            protocol,
+        })
+     }
+
+    return {
+        consumeLine,
+        performReport,
+    }
 }
+
+const lineConsumer = LineConsumer();
 
 rl.on('line', async function(line){
     try {
-        await consumeLine(line);
+        await lineConsumer.consumeLine(line);
+    } catch (err) {
+        //  log and swallow all errors
+        console.log('unexpected error: ', err)
+    }
+});
+
+rl.on('close', async function(){
+    try {
+        await lineConsumer.performReport();
     } catch (err) {
         //  log and swallow all errors
         console.log('unexpected error: ', err)

@@ -1,7 +1,10 @@
 const path = require('path');
 const { spawn } = require('child_process');
 
-const pipe2Script = (scriptFilename, lines, { env, debug } = {}) => {
+const  promiseDelay = async (milliSeconds = 1) =>
+    new Promise(resolve => setTimeout(() => resolve(), milliSeconds));
+
+const pipe2Script = (scriptFilename, lines, { env, debug, delay } = {}) => {
     return new Promise(async (resolve, reject) => {
         const dataOut = [];
 
@@ -23,7 +26,7 @@ const pipe2Script = (scriptFilename, lines, { env, debug } = {}) => {
 
         for (line of lines) {
             ts.stdin.write(`${line}\n`, 'utf-8');
-            await new Promise(resolve => setTimeout(() => resolve(), 20))
+            await promiseDelay(delay);
         }
 
         ts.stdin.end();

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const readline = require('readline');
 const {
@@ -9,18 +9,10 @@ const {
 const resolveHostNamesByIp = require('./resolve-hostnames-by-ip')();
 
 const DATA_DIR = path.join(process.env.WWW_ROOT || "./", "data");
-if (!fs.existsSync(DATA_DIR)){
-    fs.mkdirSync(DATA_DIR);
-}
 
 // interval how often data is written to log files
 const REPORT_INTERVAL = process.env.REPORT_INTERVAL || 60; // seconds
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: false
-});
 
 // compact packets
 function compact(packets) {
@@ -59,14 +51,20 @@ function compact(packets) {
 }
 
 // raw reporting
-function reportCompact(map, timeFrame) {
+async function reportCompact(map, timeFrame) {
     const fileName = path.join(DATA_DIR, `fritz-capture-${timeFrame}.csv`);
-    if (!fs.existsSync(fileName)) {
-        fs.appendFileSync(
-            fileName,
-            'time\tlocal_ip\tremote_ip\tremote_port\tprotocol\tdownload\tupload\n',
-            'utf8'
-        );
+    try {
+        await fs.access(fileName);
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            await fs.appendFile(
+                fileName,
+                'time\tlocal_ip\tremote_ip\tremote_port\tprotocol\tdownload\tupload\n',
+                'utf8'
+            );
+        } else {
+            throw err;
+        };
     }
 
     // sort by timestamp
@@ -82,30 +80,34 @@ function reportCompact(map, timeFrame) {
         line += `${entry.protocol}\t`;
         line += `${entry.download}\t`;
         line += `${entry.upload}\n`;
-        fs.appendFileSync(fileName, line, 'utf8');
+        await fs.appendFile(fileName, line, 'utf8');
     }
 }
 
 // report per time frame
-function readJsonFromFile(fileName) {
-    if (fs.existsSync(fileName)) {
-        const jsonData = fs.readFileSync(fileName, 'utf8');
+async function readJsonFromFile(fileName) {
+    try {
+        const jsonData = await fs.readFile(fileName, 'utf8');
         return JSON.parse(jsonData);
+    } catch(err) {
+        if (err.code === 'ENOENT') {
+            return {
+                local: {},
+                remote: {},
+            };
+        }
+        throw err;
     }
-    return {
-        local: {},
-        remote: {},
-    };
 }
 
-function writeJsonToFile(fileName, jsonData) {
-    fs.writeFileSync(fileName, jsonData, 'utf8');
+async function writeJsonToFile(fileName, jsonData) {
+    await fs.writeFile(fileName, jsonData, 'utf8');
 }
 
-function reportTimeFrame(map, timeFrame) {
+async function reportTimeFrame(map, timeFrame) {
     // read file that might already exist for that time frame
     const fileName = path.join(DATA_DIR, `${timeFrame}.json`);
-    const data = readJsonFromFile(fileName);
+    const data = await readJsonFromFile(fileName);
 
     // add and write data
     for (const entry of Object.values(map)) {
@@ -131,7 +133,7 @@ function reportTimeFrame(map, timeFrame) {
             upload: data.remote[entry.remoteIp].upload + entry.upload,
         };
     }
-    writeJsonToFile(fileName, JSON.stringify(data));
+    await writeJsonToFile(fileName, JSON.stringify(data));
 }
 
 const HOUR_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
@@ -140,27 +142,33 @@ const MONTH_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM');
 
 // reverse lookup ips
 const ipToHostNameDataFileName  = path.join(DATA_DIR, "ipToHostNameMap.json");
-function readIpToHostNameData() {
-    if (fs.existsSync(ipToHostNameDataFileName)) {
-        const jsonData = fs.readFileSync(ipToHostNameDataFileName, 'utf8');
+async function readIpToHostNameData() {
+    try {
+        const jsonData = await fs.readFile(ipToHostNameDataFileName, 'utf8');
         return  new Map(JSON.parse(jsonData))
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            return new Map()
+        }
+        throw err;
     }
-    return new Map()
 }
 
-function writeIpToHostNameData(ipToHostNameMap) {
-    fs.writeFileSync(ipToHostNameDataFileName, JSON.stringify([...ipToHostNameMap]), 'utf8');
+async function writeIpToHostNameData(ipToHostNameMap) {
+    await fs.writeFile(
+        ipToHostNameDataFileName, JSON.stringify([...ipToHostNameMap]), 'utf8'
+    );
 }
 
 async function resolveLocalHostNames(map) {
-    const ipToHostNameMap = readIpToHostNameData();
+    const ipToHostNameMap = await readIpToHostNameData();
     for (const entry of Object.values(map)) {
         if (!ipToHostNameMap.has(entry.localIp)) {
             const hostNames = await resolveHostNamesByIp(entry.localIp);
             ipToHostNameMap.set(entry.localIp, hostNames.slice(-1)[0])
         }
     }
-    writeIpToHostNameData(ipToHostNameMap);
+    await writeIpToHostNameData(ipToHostNameMap);
 }
 
 // report
@@ -173,10 +181,10 @@ async function report(packets) {
 
     const map = compact(packets);
     await resolveLocalHostNames(map);
-    reportCompact(map, firstTimeStamp.format(MONTH_FORMAT));
-    reportTimeFrame(map, firstTimeStamp.format(HOUR_FORMAT));
-    reportTimeFrame(map, firstTimeStamp.format(DAY_FORMAT));
-    reportTimeFrame(map, firstTimeStamp.format(MONTH_FORMAT));
+    await reportCompact(map, firstTimeStamp.format(MONTH_FORMAT));
+    await reportTimeFrame(map, firstTimeStamp.format(HOUR_FORMAT));
+    await reportTimeFrame(map, firstTimeStamp.format(DAY_FORMAT));
+    await reportTimeFrame(map, firstTimeStamp.format(MONTH_FORMAT));
 }
 
 // collect input
@@ -210,7 +218,7 @@ const LineConsumer = () => {
             return true;
         }
         return false;
-    }
+    };
 
     async function flushReport() {
         const _packets = packets.slice(0);
@@ -274,24 +282,36 @@ const LineConsumer = () => {
         consumeLine,
         flushReport,
     }
+};
+
+async function capture() {
+    const lineConsumer = LineConsumer();
+
+    await fs.mkdir(DATA_DIR,{ recursive: true });
+
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: false
+    });
+
+    rl.on('line', async function (line) {
+        try {
+            await lineConsumer.consumeLine(line);
+        } catch (err) {
+            //  log and swallow all errors
+            console.log('unexpected error: ', err)
+        }
+    });
+
+    rl.on('close', async function () {
+        try {
+            await lineConsumer.flushReport();
+        } catch (err) {
+            //  log and swallow all errors
+            console.log('unexpected error: ', err)
+        }
+    });
 }
 
-const lineConsumer = LineConsumer();
-
-rl.on('line', async function(line){
-    try {
-        await lineConsumer.consumeLine(line);
-    } catch (err) {
-        //  log and swallow all errors
-        console.log('unexpected error: ', err)
-    }
-});
-
-rl.on('close', async function(){
-    try {
-        await lineConsumer.flushReport();
-    } catch (err) {
-        //  log and swallow all errors
-        console.log('unexpected error: ', err)
-    }
-});
+capture();

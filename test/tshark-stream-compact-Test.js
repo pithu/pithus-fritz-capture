@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const os = require('os');
 const path = require('path');
 
@@ -44,22 +44,24 @@ describe('tshark-stream-compact-Test', () => {
             tcp_dstport: '443',
         });
 
-    const pipe2script = (dataLines, debug = false) =>
-        _pipe2script(
+    const pipe2script = async (dataLines, debug = false) => {
+        console.log(await _pipe2script(
             tsharkStreamCompactScript,
             dataLines, {
                 env: {
                     'WWW_ROOT': TEST_DIR,
                 },
                 debug,
+                delay: 100,
             },
-        );
+        ));
+    }
 
-    const readJSONFile = fileName =>
-        JSON.parse(fs.readFileSync(path.join(DATA_DIR, fileName), 'utf8'));
+    const readJSONFile = async fileName =>
+        JSON.parse(await fs.readFile(path.join(DATA_DIR, fileName), 'utf8'));
 
-    const readFile = fileName =>
-        fs.readFileSync(path.join(DATA_DIR, fileName), 'utf8');
+    const readFile = async fileName =>
+        await fs.readFile(path.join(DATA_DIR, fileName), 'utf8');
 
     beforeEach(() => {
         cleanUpDataDir();
@@ -80,7 +82,7 @@ describe('tshark-stream-compact-Test', () => {
 
         await pipe2script(dataLines);
 
-        const hourReport = readJSONFile('2019-10-27T13.json');
+        const hourReport = await readJSONFile('2019-10-27T13.json');
         expect(hourReport).to.eql({
             local: {
                 '192.168.2.100': { download: 1003, upload: 10 },
@@ -102,9 +104,9 @@ describe('tshark-stream-compact-Test', () => {
             tcpDownload('2019-10-28T14:40:00.000Z', 2001, '192.168.2.100'),
         ];
 
-        await pipe2script(dataLines, false);
+        await pipe2script(dataLines);
 
-        const dailyReport = readJSONFile('2019-10-27.json');
+        const dailyReport = await readJSONFile('2019-10-27.json');
         expect(dailyReport).to.eql({
             local: {
                 '192.168.2.100': { download: 2210, upload: 20 },
@@ -135,9 +137,9 @@ describe('tshark-stream-compact-Test', () => {
             tcpDownload('2019-11-28T14:40:00.000Z', 2001, '192.168.2.100'),
         ];
 
-        await pipe2script(dataLines, false);
+        await pipe2script(dataLines);
 
-        const monthlyReport = readJSONFile('2019-10.json');
+        const monthlyReport = await readJSONFile('2019-10.json');
         expect(monthlyReport).to.eql({
             local: {
                 '192.168.2.100': { download: 2233, upload: 37 },
@@ -170,9 +172,9 @@ describe('tshark-stream-compact-Test', () => {
             tcpDownload('2019-11-28T14:40:00.000Z', 2001, '192.168.2.100'),
         ];
 
-        await pipe2script(dataLines, false);
+        await pipe2script(dataLines);
 
-        const monthlyCSVReport = readFile('fritz-capture-2019-10.csv')
+        const monthlyCSVReport = (await readFile('fritz-capture-2019-10.csv'))
             .split("\n")
             .filter(line => line && line.length > 0);
 

@@ -13,7 +13,8 @@
     "url": "https://github.com/pithu/pithus-fritz-capture.git"
   },
   "dependencies": {
-    "@js-joda/core": "^1.11.0"
+    "@js-joda/core": "^1.11.0",
+    "await-semaphore": "^0.1.3"
   },
   "devDependencies": {
     "chai": "^4.2.0",

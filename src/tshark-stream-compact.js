@@ -5,6 +5,8 @@ const readline = require('readline');
 const {
     ChronoUnit, Instant, LocalDateTime, ZoneId, DateTimeFormatter,
 } = require('@js-joda/core');
+const { Semaphore } = require('await-semaphore');
+
 const ResolveHostNamesByIps = require('./resolve-hostnames-by-ip');
 
 const DATA_DIR = path.join(process.env.WWW_ROOT || "./", "data");
@@ -180,6 +182,7 @@ function compactProtocols(protocols) {
 }
 
 const LineConsumer = async () => {
+    const semaphore = new Semaphore(1);
     const resolveIps = await ResolveHostNamesByIps({
         storeFileName: IP_TO_HOSTNAME_STORE_FILENAME,
     });
@@ -203,9 +206,15 @@ const LineConsumer = async () => {
     };
 
     async function flushReport(packet) {
-        const _packets = packets.slice(0);
-        packets = packet ? [packet] : [];
-        await report(_packets, resolveIps);
+        let release;
+        try {
+            const _packets = packets.slice(0);
+            packets = packet ? [packet] : [];
+            release = await semaphore.acquire();
+            await report(_packets, resolveIps);
+        } finally {
+            release();
+        }
     }
 
     async function performReport(packet) {

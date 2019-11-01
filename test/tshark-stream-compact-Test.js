@@ -52,7 +52,7 @@ describe('tshark-stream-compact-Test', () => {
                     'WWW_ROOT': TEST_DIR,
                 },
                 debug,
-                delay: 100,
+                delay: 10,
             },
         ));
     }

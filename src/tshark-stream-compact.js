@@ -1,18 +1,67 @@
 #!/usr/bin/env node
-
 const fs = require('fs').promises;
 const path = require('path');
 const readline = require('readline');
 const {
     ChronoUnit, Instant, LocalDateTime, ZoneId, DateTimeFormatter,
 } = require('@js-joda/core');
-const resolveHostNamesByIp = require('./resolve-hostnames-by-ip')();
+const ResolveHostNamesByIps = require('./resolve-hostnames-by-ip');
 
 const DATA_DIR = path.join(process.env.WWW_ROOT || "./", "data");
+
+const IP_TO_HOSTNAME_STORE_FILENAME = path.join(DATA_DIR, "ipToHostNameMap.json");
 
 // interval how often data is written to log files
 const REPORT_INTERVAL = process.env.REPORT_INTERVAL || 60; // seconds
 
+// file name pattern
+const HOUR_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
+const DAY_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd');
+const MONTH_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM');
+
+// helper functions
+const isLocalIp = (ip) => {
+    if (!ip) return false;
+    const parts = ip.split('.');
+    return parts[0] === '10' ||
+        (parts[0] === '192' && parts[1] === '168') ||
+        (parts[0] === '172' && (parseInt(parts[1], 10) >= 16 && parseInt(parts[1], 10) <= 31));
+}
+
+const fsExists = async (fileName) => {
+    try {
+        await fs.access(fileName);
+        return true
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            return false
+        }
+        throw err;
+    }
+};
+
+async function readJsonFromFile(fileName) {
+    if (await fsExists(fileName)) {
+        return JSON.parse(
+            await fs.readFile(fileName, 'utf8')
+        );
+    }
+    return null;
+}
+
+async function writeJsonToFile(fileName, jsonData) {
+    await fs.writeFile(fileName, jsonData, 'utf8');
+}
+
+const writeCsvHeader = async (fileName) => {
+    if (!await fsExists(fileName)) {
+        await fs.appendFile(
+            fileName,
+            'time\tlocal_ip\tremote_ip\tremote_port\tprotocol\tdownload\tupload\n',
+            'utf8'
+        );
+    }
+};
 
 // compact packets
 function compact(packets) {
@@ -53,19 +102,7 @@ function compact(packets) {
 // raw reporting
 async function reportCompact(map, timeFrame) {
     const fileName = path.join(DATA_DIR, `fritz-capture-${timeFrame}.csv`);
-    try {
-        await fs.access(fileName);
-    } catch (err) {
-        if (err.code === 'ENOENT') {
-            await fs.appendFile(
-                fileName,
-                'time\tlocal_ip\tremote_ip\tremote_port\tprotocol\tdownload\tupload\n',
-                'utf8'
-            );
-        } else {
-            throw err;
-        };
-    }
+    await writeCsvHeader(fileName);
 
     // sort by timestamp
     const entries = Object.values(map);
@@ -85,29 +122,13 @@ async function reportCompact(map, timeFrame) {
 }
 
 // report per time frame
-async function readJsonFromFile(fileName) {
-    try {
-        const jsonData = await fs.readFile(fileName, 'utf8');
-        return JSON.parse(jsonData);
-    } catch(err) {
-        if (err.code === 'ENOENT') {
-            return {
-                local: {},
-                remote: {},
-            };
-        }
-        throw err;
-    }
-}
-
-async function writeJsonToFile(fileName, jsonData) {
-    await fs.writeFile(fileName, jsonData, 'utf8');
-}
-
 async function reportTimeFrame(map, timeFrame) {
     // read file that might already exist for that time frame
     const fileName = path.join(DATA_DIR, `${timeFrame}.json`);
-    const data = await readJsonFromFile(fileName);
+    const data = (await readJsonFromFile(fileName)) || {
+        local: {},
+        remote: {},
+    };
 
     // add and write data
     for (const entry of Object.values(map)) {
@@ -136,43 +157,8 @@ async function reportTimeFrame(map, timeFrame) {
     await writeJsonToFile(fileName, JSON.stringify(data));
 }
 
-const HOUR_FORMAT = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
-const DAY_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM-dd');
-const MONTH_FORMAT = DateTimeFormatter.ofPattern('uuuu-MM');
-
-// reverse lookup ips
-const ipToHostNameDataFileName  = path.join(DATA_DIR, "ipToHostNameMap.json");
-async function readIpToHostNameData() {
-    try {
-        const jsonData = await fs.readFile(ipToHostNameDataFileName, 'utf8');
-        return  new Map(JSON.parse(jsonData))
-    } catch (err) {
-        if (err.code === 'ENOENT') {
-            return new Map()
-        }
-        throw err;
-    }
-}
-
-async function writeIpToHostNameData(ipToHostNameMap) {
-    await fs.writeFile(
-        ipToHostNameDataFileName, JSON.stringify([...ipToHostNameMap]), 'utf8'
-    );
-}
-
-async function resolveLocalHostNames(map) {
-    const ipToHostNameMap = await readIpToHostNameData();
-    for (const entry of Object.values(map)) {
-        if (!ipToHostNameMap.has(entry.localIp)) {
-            const hostNames = await resolveHostNamesByIp(entry.localIp);
-            ipToHostNameMap.set(entry.localIp, hostNames.slice(-1)[0])
-        }
-    }
-    await writeIpToHostNameData(ipToHostNameMap);
-}
-
 // report
-async function report(packets) {
+async function report(packets, resolveIps) {
     if (packets.length === 0){
         return;
     }
@@ -180,7 +166,7 @@ async function report(packets) {
     const firstTimeStamp = LocalDateTime.ofInstant(packets[0].instant, ZoneId.UTC);
 
     const map = compact(packets);
-    await resolveLocalHostNames(map);
+    await resolveIps(Object.values(map).map(entry => entry.localIp));
     await reportCompact(map, firstTimeStamp.format(MONTH_FORMAT));
     await reportTimeFrame(map, firstTimeStamp.format(HOUR_FORMAT));
     await reportTimeFrame(map, firstTimeStamp.format(DAY_FORMAT));
@@ -189,19 +175,15 @@ async function report(packets) {
 
 // collect input
 
-function isLocalIp(ip) {
-    if (!ip) return false;
-    var parts = ip.split('.');
-    return parts[0] === '10' ||
-        (parts[0] === '192' && parts[1] === '168') ||
-        (parts[0] === '172' && (parseInt(parts[1], 10) >= 16 && parseInt(parts[1], 10) <= 31));
-}
-
 function compactProtocols(protocols) {
     return protocols && protocols.split(':').slice(2, 8).join(':')
 }
 
-const LineConsumer = () => {
+const LineConsumer = async () => {
+    const resolveIps = await ResolveHostNamesByIps({
+        storeFileName: IP_TO_HOSTNAME_STORE_FILENAME,
+    });
+
     let lastReportTimestamp;
     let packets = [];
 
@@ -220,17 +202,15 @@ const LineConsumer = () => {
         return false;
     };
 
-    async function flushReport() {
+    async function flushReport(packet) {
         const _packets = packets.slice(0);
-        packets = [];
-        await report(_packets);
+        packets = packet ? [packet] : [];
+        await report(_packets, resolveIps);
     }
 
     async function performReport(packet) {
         if (isReportIntervalReached(packet.instant)) {
-            const _packets = packets.slice(0);
-            packets = [packet];
-            await report(_packets);
+            await flushReport(packet);
         } else {
             packets.push(packet)
         }
@@ -285,7 +265,7 @@ const LineConsumer = () => {
 };
 
 async function capture() {
-    const lineConsumer = LineConsumer();
+    const lineConsumer = await LineConsumer();
 
     await fs.mkdir(DATA_DIR,{ recursive: true });
 

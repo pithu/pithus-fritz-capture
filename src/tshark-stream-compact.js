@@ -206,11 +206,10 @@ const LineConsumer = async () => {
     };
 
     async function flushReport(packet) {
-        let release;
+        const _packets = packets.slice(0);
+        packets = packet ? [packet] : [];
+        const release = await semaphore.acquire();
         try {
-            const _packets = packets.slice(0);
-            packets = packet ? [packet] : [];
-            release = await semaphore.acquire();
             await report(_packets, resolveIps);
         } finally {
             release();

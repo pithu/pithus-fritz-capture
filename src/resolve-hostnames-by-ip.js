@@ -60,7 +60,10 @@ const ResolveHostNamesByIps = async ({ storeFileName, dnsServer }) => {
         return hostNames;
     };
 
+    const getHostName = ip => ipToHostNameMap.get(ip) || 'unknown';
+
     return {
+        getHostName,
         resolveIp,
         resolveIps,
     }

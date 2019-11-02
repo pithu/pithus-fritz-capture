@@ -51,6 +51,7 @@ describe('tshark-stream-compact-Test', () => {
             dataLines, {
                 env: {
                     'WWW_ROOT': TEST_DIR,
+                    'DNS_SERVER': '127.0.0.1',
                 },
                 debug,
                 delay: 10,

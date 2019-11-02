@@ -1,12 +1,20 @@
 const fs = require('fs').promises;
 const { Resolver } = require('dns').promises;
+const { Instant } = require('@js-joda/core');
 
-const ResolveHostNamesByIps = async ({ storeFileName, dnsServer }) => {
-    const resolver = new Resolver();
-    const _dnsServer = dnsServer || process.env.DNS_SERVER;
-    if (_dnsServer) {
-        resolver.setServers([_dnsServer]);
+const LEASE_TIME = 3600; // seconds
+
+const ResolveHostNamesByIps = async ({ storeFileName, resolver, leaseTime }) => {
+    if (!resolver) {
+        resolver = new Resolver();
+        if (process.env.DNS_SERVER) {
+            resolver.setServers([process.env.DNS_SERVER]);
+        }
     }
+    if (leaseTime == null) {
+        leaseTime = LEASE_TIME;
+    }
+
     async function readIpToHostNameStore() {
         try {
             const jsonData = await fs.readFile(storeFileName, 'utf8');
@@ -28,6 +36,30 @@ const ResolveHostNamesByIps = async ({ storeFileName, dnsServer }) => {
     const ipToHostNameMap = storeFileName ?
         await readIpToHostNameStore() : new Map();
 
+    const hasValidEntry = ip => {
+        if (!ipToHostNameMap.has(ip)) {
+            return false;
+        }
+
+        const entry = ipToHostNameMap.get(ip);
+        if (!entry || !entry.hostNames) {
+            return false;
+        }
+
+        return Instant.now().epochSecond() - entry.timestamp < leaseTime;
+    };
+
+    const getHostName = ip => {
+        const entry = ipToHostNameMap.get(ip);
+        if (!entry) {
+            return 'unknown';
+        }
+        if (entry && entry.hostNames) {
+            return entry.hostNames.slice(-1)[0];
+        }
+        return entry;
+    };
+
     const reverse = async ip => {
         try {
             return await resolver.reverse(ip);
@@ -39,28 +71,30 @@ const ResolveHostNamesByIps = async ({ storeFileName, dnsServer }) => {
     const resolveIp = async ip => {
         let updated = false;
 
-        if (!ipToHostNameMap.has(ip)) {
+        if (!hasValidEntry(ip)) {
             updated = true;
             const hostNames = await reverse(ip);
-            ipToHostNameMap.set(ip, hostNames.slice(-1)[0])
+            ipToHostNameMap.set(ip, {
+                hostNames,
+                timestamp: Instant.now().epochSecond(),
+            })
         }
 
         if (updated && storeFileName) {
             await writeIpToHostNameData(ipToHostNameMap);
         }
 
-        return ipToHostNameMap.get(ip);
+        return getHostName(ip);
     };
 
     const resolveIps = async ips => {
         const hostNames = [];
         for (const ip of ips) {
-            hostNames.push(await resolveIp(ip));
+            await resolveIp(ip);
+            hostNames.push(getHostName(ip));
         }
         return hostNames;
     };
-
-    const getHostName = ip => ipToHostNameMap.get(ip) || 'unknown';
 
     return {
         getHostName,

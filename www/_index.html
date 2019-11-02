@@ -14,7 +14,16 @@
         const MONTH_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM');
 
         let ipToHostNameMap = new Map();
-        const ipToHostName = (ip) => ipToHostNameMap.get(ip) || "unknown";
+        const ipToHostName = ip => {
+            const entry = ipToHostNameMap.get(ip);
+            if (!entry) {
+                return 'unknown';
+            }
+            if (entry && entry.hostNames) {
+                return entry.hostNames.slice(-1)[0];
+            }
+            return entry;
+        };
 
         function formatSize(bytes) {
             return filesize(bytes, { locale: "de", round: 2 })

@@ -1,27 +1,12 @@
 const fs = require('fs').promises;
-const { promisify } = require('util');
-const { Resolver } = require('dns');
-
-const ResolveHostNamesByIp = (_dnsServer) => {
-    const resolver = new Resolver();
-    const dnsServer = _dnsServer || process.env.DNS_SERVER || '192.168.2.1';
-    resolver.setServers([dnsServer]);
-
-    const ipToHost = (ip, cb) => resolver.reverse(ip, cb);
-    const reverseAsync = promisify(ipToHost);
-
-    return async (ip) => {
-        try {
-            return await reverseAsync(ip);
-        } catch (err) {
-            return ['unresolved'];
-        }
-    };
-};
+const { Resolver } = require('dns').promises;
 
 const ResolveHostNamesByIps = async ({ storeFileName, dnsServer }) => {
-    const resolveHostNamesByIp = ResolveHostNamesByIp(dnsServer);
-
+    const resolver = new Resolver();
+    const _dnsServer = dnsServer || process.env.DNS_SERVER;
+    if (_dnsServer) {
+        resolver.setServers([_dnsServer]);
+    }
     async function readIpToHostNameStore() {
         try {
             const jsonData = await fs.readFile(storeFileName, 'utf8');
@@ -43,21 +28,42 @@ const ResolveHostNamesByIps = async ({ storeFileName, dnsServer }) => {
     const ipToHostNameMap = storeFileName ?
         await readIpToHostNameStore() : new Map();
 
-    return async (ips) => {
-        const _ips = [].concat(ips);
-        for (const ip of _ips) {
-            if (!ipToHostNameMap.has(ip)) {
-                const hostNames = await resolveHostNamesByIp(ip);
-                ipToHostNameMap.set(ip, hostNames.slice(-1)[0])
-            }
+    const reverse = async ip => {
+        try {
+            return await resolver.reverse(ip);
+        } catch (err) {
+            return ['unresolved'];
+        }
+    };
+
+    const resolveIp = async ip => {
+        let updated = false;
+
+        if (!ipToHostNameMap.has(ip)) {
+            updated = true;
+            const hostNames = await reverse(ip);
+            ipToHostNameMap.set(ip, hostNames.slice(-1)[0])
         }
 
-        if (storeFileName) {
+        if (updated && storeFileName) {
             await writeIpToHostNameData(ipToHostNameMap);
         }
 
-        return ipToHostNameMap;
+        return ipToHostNameMap.get(ip);
     };
+
+    const resolveIps = async ips => {
+        const hostNames = [];
+        for (const ip of ips) {
+            hostNames.push(await resolveIp(ip));
+        }
+        return hostNames;
+    };
+
+    return {
+        resolveIp,
+        resolveIps,
+    }
 };
 
 module.exports = ResolveHostNamesByIps;

@@ -183,7 +183,7 @@ function compactProtocols(protocols) {
 
 const LineConsumer = async () => {
     const semaphore = new Semaphore(1);
-    const resolveIps = await ResolveHostNamesByIps({
+    const { resolveIps } = await ResolveHostNamesByIps({
         storeFileName: IP_TO_HOSTNAME_STORE_FILENAME,
     });
 

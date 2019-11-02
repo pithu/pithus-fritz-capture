@@ -9,10 +9,11 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
 
     <script>
+        const HOUR_FORMAT = JSJoda.DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
+        const DAY_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM-dd');
+        const MONTH_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM');
+
         let ipToHostNameMap = new Map();
-        $.getJSON("data/ipToHostNameMap.json", function (data) {
-            ipToHostNameMap = new Map(data);
-        });
         const ipToHostName = (ip) => ipToHostNameMap.get(ip) || "unknown";
 
         function formatSize(bytes) {
@@ -40,45 +41,43 @@
         }
 
         function refreshPage() {
-            $(function () {
-                const HOUR_FORMAT = JSJoda.DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH");
-                const DAY_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM-dd');
-                const MONTH_FORMAT = JSJoda.DateTimeFormatter.ofPattern('uuuu-MM');
-                const zonedDateTime = JSJoda.ZonedDateTime.now(JSJoda.ZoneId.UTC);
+            const zonedDateTime = JSJoda.ZonedDateTime.now(JSJoda.ZoneId.UTC);
 
-                $("#time").replaceWith("<div id='time'>" + zonedDateTime.toString() + "</div>");
-
-                const currentHourFileName = zonedDateTime.format(HOUR_FORMAT) + '.json';
-                $("#currentHour .time").replaceWith("<span class='time'>" + zonedDateTime.format(HOUR_FORMAT) + "</span>");
-                appendTimeFrame(currentHourFileName, "#currentHour tbody");
-
-                const lastHourFileName = zonedDateTime.minusHours(1).format(HOUR_FORMAT) + '.json';
-                $("#lastHour .time").replaceWith("<span class='time'>" + zonedDateTime.minusHours(1).format(HOUR_FORMAT) + "</span>");
-                appendTimeFrame(lastHourFileName, "#lastHour tbody");
-
-                const todayFileName = zonedDateTime.format(DAY_FORMAT) + '.json';
-                $("#today .time").replaceWith("<span class='time'>" + zonedDateTime.format(DAY_FORMAT) + "</span>");
-                appendTimeFrame(todayFileName, "#today tbody");
-
-                const yesterdayFileName = zonedDateTime.minusDays(1).format(DAY_FORMAT) + '.json';
-                $("#yesterday .time").replaceWith("<span class='time'>" + zonedDateTime.minusDays(1).format(DAY_FORMAT) + "</span>");
-                appendTimeFrame(yesterdayFileName, "#yesterday tbody");
-
-                const currentMonthFileName = zonedDateTime.format(MONTH_FORMAT) + '.json';
-                $("#currentMonth .time").replaceWith("<span class='time'>" + zonedDateTime.format(MONTH_FORMAT) + "</span>");
-                appendTimeFrame(currentMonthFileName, "#currentMonth tbody");
-
-                const lastMonthFileName = zonedDateTime.minusMonths(1).format(MONTH_FORMAT) + '.json';
-                $("#lastMonth .time").replaceWith("<span class='time'>" + zonedDateTime.minusMonths(1).format(MONTH_FORMAT) + "</span>");
-                appendTimeFrame(lastMonthFileName, "#lastMonth tbody");
+            $.getJSON("data/ipToHostNameMap.json", function (data) {
+                ipToHostNameMap = new Map(data);
             });
+
+            $("#time").replaceWith("<div id='time'>" + zonedDateTime.toString() + "</div>");
+
+            const currentHourFileName = zonedDateTime.format(HOUR_FORMAT) + '.json';
+            $("#currentHour .time").replaceWith("<span class='time'>" + zonedDateTime.format(HOUR_FORMAT) + "</span>");
+            appendTimeFrame(currentHourFileName, "#currentHour tbody");
+
+            const lastHourFileName = zonedDateTime.minusHours(1).format(HOUR_FORMAT) + '.json';
+            $("#lastHour .time").replaceWith("<span class='time'>" + zonedDateTime.minusHours(1).format(HOUR_FORMAT) + "</span>");
+            appendTimeFrame(lastHourFileName, "#lastHour tbody");
+
+            const todayFileName = zonedDateTime.format(DAY_FORMAT) + '.json';
+            $("#today .time").replaceWith("<span class='time'>" + zonedDateTime.format(DAY_FORMAT) + "</span>");
+            appendTimeFrame(todayFileName, "#today tbody");
+
+            const yesterdayFileName = zonedDateTime.minusDays(1).format(DAY_FORMAT) + '.json';
+            $("#yesterday .time").replaceWith("<span class='time'>" + zonedDateTime.minusDays(1).format(DAY_FORMAT) + "</span>");
+            appendTimeFrame(yesterdayFileName, "#yesterday tbody");
+
+            const currentMonthFileName = zonedDateTime.format(MONTH_FORMAT) + '.json';
+            $("#currentMonth .time").replaceWith("<span class='time'>" + zonedDateTime.format(MONTH_FORMAT) + "</span>");
+            appendTimeFrame(currentMonthFileName, "#currentMonth tbody");
+
+            const lastMonthFileName = zonedDateTime.minusMonths(1).format(MONTH_FORMAT) + '.json';
+            $("#lastMonth .time").replaceWith("<span class='time'>" + zonedDateTime.minusMonths(1).format(MONTH_FORMAT) + "</span>");
+            appendTimeFrame(lastMonthFileName, "#lastMonth tbody");
         }
 
-        refreshPage();
-
-        $(document).ready(function() {
+        $(function () {
+            refreshPage();
             // reload every half minute
-            setInterval('refreshPage()', 30000);
+            setInterval(refreshPage, 30000);
         });
     </script>
 </head>

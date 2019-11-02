@@ -8,6 +8,7 @@ const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
 
 const _pipe2script = require('./pipe-to-script');
+const ResolveHostNamesByIps = require('../src/resolve-hostnames-by-ip');
 
 const tsharkStreamCompactScript = './src/tshark-stream-compact.js';
 
@@ -149,7 +150,7 @@ describe('tshark-stream-compact-Test', () => {
                 '128.65.210.180': { download: 10236, upload: 66 }
             },
          })
-    })
+    });
 
     it('should write one monthly csv file', async () => {
         const dataLines = [
@@ -189,4 +190,28 @@ describe('tshark-stream-compact-Test', () => {
         expect(monthlyCSVReport).to.include('2019-10-29T23:40:02.002Z\t192.168.2.100\t128.65.210.180\t443\t\t0\t17');
         expect(monthlyCSVReport).to.include('2019-10-30T23:40:02.001Z\t192.168.2.101\t128.65.210.180\t234439\t\t4003\t0');
     })
+
+
+    it('should write ip to hostname file', async () => {
+        const dataLines = [
+            tcpDownload('2019-10-27T13:40:00.001Z', 1003, '192.168.2.100'),
+            tcpUpload('2019-10-27T13:40:01.001Z', 10, '192.168.2.100'),
+            tcpDownload('2019-10-27T13:40:02.001Z', 3000, '192.168.2.101'),
+            // trigger write, one hour later
+            tcpDownload('2019-10-27T14:40:00.000Z', 1001, '192.168.2.100'),
+        ];
+
+        await pipe2script(dataLines);
+
+        const { getHostName } = await ResolveHostNamesByIps({
+            storeFileName: path.join(DATA_DIR, 'ipToHostNameMap.json'),
+        });
+
+        expect(getHostName('192.168.2.100')).to.have.lengthOf.above(0);
+        expect(getHostName('192.168.2.100')).to.not.eql('unknown');
+        expect(getHostName('192.168.2.101')).to.have.lengthOf.above(0);
+        expect(getHostName('192.168.2.101')).to.not.eql('unknown');
+
+        expect(getHostName('192.192.192.192')).to.eql('unknown');
+    });
 });
